@@ -10,7 +10,7 @@ Assume that the redshift of a Cepheid in a galaxy equals the redshift of the who
 
 $$v_{\text{rec}} = H_0 \cdot d$$
 
-across the whole provided dataset, with $H_0 = 67\,\text{km}\,\text{s}^{-1}\,\text{Mpc}^{-1}$. Estimate galaxy redshifts using template cross-correlation in log-$\lambda$ space. Since the redshifts are small, assume the classical formula for the redshift. The laboratory reference spectrum is provided together with the dataset.
+across the whole provided dataset, with $H_0 = 67\\,\text{km}\\,\text{s}^{-1}\\,\text{Mpc}^{-1}$. Estimate galaxy redshifts using template cross-correlation in log-$\lambda$ space. Since the redshifts are small, assume the classical formula for the redshift. The laboratory reference spectrum is provided together with the dataset.
 
 Produce the following outputs:
 

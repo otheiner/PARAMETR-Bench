@@ -1,4 +1,4 @@
-# Physics analysis benchmarks 📊⚛️🧲🧪
+# Physics analysis benchmarks 📊
 
 This repository is a collection of original simulation-based physics analysis tasks with known ground truth that I developed. They are designed for human learners and multimodal LLM benchmarking. Can you perform these analyses correctly and beat the LLMs?
 
@@ -29,6 +29,6 @@ This task mimics the analysis done by Edwin Hubble which led to one of the most 
 
 A toy example simulating a real particle physics analysis pipeline — from raw detector data reconstruction all the way to the statistical "discovery" of an unknown hypothetical particle. Data reconstruction requires extracting track curvature of secondary particles inside a tracking detector in order to determine their momenta. In this simplified setup, track identification can be done visually by a human learner using physical intuition, but proves surprisingly difficult for LLMs. Momentum information is then combined with calorimetric energy measurements to reconstruct the four-momenta of the secondary particles. This allows building a histogram of the reconstructed invariant mass, to which a composed signal-plus-background model is fitted. The mass and width of the unknown particle are extracted from the fit parameters, and the statistical significance of the signal over background is estimated.
 
-4. **Lissajous figures and quality assurance** 🧲
+4. **Lissajous figures and quality assurance** ⚡
 
 This task puts the solver in the position of a quality assurance expert assessing AC power supplies produced by manufacturing machines in a factory. It requires combining tabulated production data with oscilloscope images showing Lissajous figures. The figures are used to determine the frequency of each tested power supply, which is then combined with knowledge of available inductor coils to assess whether the unit meets the impedance specification. The multi-step pipeline — frequency extraction from images, impedance calculation, QA form completion, daily failure histogram, and per-machine failure rate analysis — makes this task deceptively challenging for LLMs despite the straightforward underlying physics.

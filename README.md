@@ -20,7 +20,7 @@ This repository contains a few tasks but more may be added in the future. Detail
 
 1. **Cepheid period-luminosity calibration** 🪐
 
-This analysis focuses on the well-known relation between absolute magnitude of Cepheid variables and their period, recreating (though not exactly) the discovery by Henrietta Swan Leavitt. The task requires combining Hubble's law, spectroscopic data of galaxies, and photometric data about Cepheid variables. Beyond basic concepts from astrophysics, it tests methods of physical data analysis such as template cross-correlation in log-λ space.
+This analysis focuses on the well-known relation between absolute magnitude of Cepheid variables and their period, recreating (though not exactly) the discovery by Henrietta Swan Leavitt, whose foundational contribution to observational cosmology was never recognized with a Nobel Prize. The task requires combining Hubble's law, spectroscopic data of galaxies, and photometric data about Cepheid variables. Beyond basic concepts from astrophysics, it tests methods of physical data analysis such as template cross-correlation in log-λ space.
 
 2. **Estimating Hubble's Constant** 🪐
 

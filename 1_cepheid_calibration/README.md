@@ -18,3 +18,9 @@ Produce the following outputs:
 2. A plot of the data points used for the fit, including the best-fit straight line motivated by the period-luminosity relation.
 3. A TXT file clearly stating the estimated fit parameters with uncertainties derived from the linear regression.
 ________________________________________
+
+## Files provided
+
+- `cepheides_measurements.pdf` — database of observations
+- `spectral_lines_lab.png` — laboratory reference spectrum
+- `spectra/` — folder containing observed galaxy spectra images

@@ -26,4 +26,4 @@ ________________________________________________________
 
 ## About the dataset
 
-This dataset contains .csv dataset with details of the production of the units (power supplies). It states the supply ID, tag of the machine where the unit was produced, the day when it was produced, batch ID, and measurement ID. Measurement ID is then used as a name of the file showing the Lissajous figure from the oscilloscope. All these informations are generated probabilistically, so each generation will produce original dataset with different failing machines and hence different ground truth answer.
+This dataset contains .csv dataset with details of the production of the units (power supplies). It states the supply ID, tag of the machine where the unit was produced, the day when it was produced, batch ID, and measurement ID. Measurement ID is then used as a name of the file showing the Lissajous figure from the oscilloscope. All this information is generated probabilistically, so each generation will produce original dataset with different failing machines and hence different ground truth answer.

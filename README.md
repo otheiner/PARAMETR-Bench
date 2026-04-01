@@ -1,5 +1,7 @@
 # Physics analysis benchmarks 📊
 
+*Remark: These tasks were originally created as physics data analysis challenges for LLM evaluation. To avoid copyright issues and maintain full control over the dataset (including the ability to tune difficulty with a single parameter change) I built a synthetic data generation pipelines that produce both the input data and the ground truth solution in one go. The tasks turned out well enough to share publicly.*
+
 This repository is a collection of original simulation-based physics analysis tasks with known ground truth that I developed. They are designed for human learners and multimodal LLM benchmarking. Can you perform these analyses correctly and beat the LLMs?
 
 Even if the tasks are grounded in real analyses, the structure and the format of the input data might make them look like a toy example. However, this structure is excellent for multimodal LLM benchmarking for several reasons:

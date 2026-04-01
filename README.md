@@ -20,7 +20,7 @@ I tested these tasks with Claude Opus 4.5 and each of them had at least one aspe
 
 This repository contains a few tasks but more may be added in the future. Details of each task are written in their respective folders together with a small sample of the data that the data generation pipeline produces and the ground truth answers. To make these tasks challenging for LLMs, sample sizes have to be larger than the snippets shown in this repository. This can be easily tweaked in the notebooks and data can be produced locally in larger batches. Important parameters of each input file are stored in the pandas dataframe, which gives the user immediate access to the intermediate ground truth values and see which steps are problematic for LLMs.
 
-1. **Cepheid period-luminosity calibration [(link)](https://github.com/otheiner/physics-analysis-benchmarks/blob/main/2_cepheid_calibration)** 🪐
+1. **Cepheid period-luminosity calibration [(link)](https://github.com/otheiner/physics-analysis-benchmarks/tree/main/1_cepheid_calibration)** 🪐
 
 This analysis focuses on the well-known relation between absolute magnitude of Cepheid variables and their period, recreating (though not exactly) the discovery by Henrietta Swan Leavitt, whose foundational contribution to observational cosmology was never recognized with a Nobel Prize. The task requires combining Hubble's law, spectroscopic data of galaxies, and photometric data about Cepheid variables. Beyond basic concepts from astrophysics, it tests methods of physical data analysis such as template cross-correlation in log-λ space.
 

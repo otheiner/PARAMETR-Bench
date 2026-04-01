@@ -1,7 +1,5 @@
 ## Problem definition
 
-# Lissajous Figures and Quality Assurance
-
 The provided dataset contains quality control records from PrecisionS&C, a company manufacturing two primary product lines:
 
 - Power supplies capable of generating alternating current (AC) at precisely defined, constant frequencies up to a maximum of 100 Hz.

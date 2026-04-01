@@ -33,8 +33,7 @@ This analysis focuses on the well-known relation between absolute magnitude of C
 This task mimics the analysis done by Edwin Hubble which led to one of the most significant discoveries in observational cosmology. It is essentially an inverse approach to the Cepheid calibration from the previous task, with a different visual representation of the spectra. It requires analyzing spectroscopic data and identifying redshifts of fictitious galaxies. This information is then combined with photometric information about Cepheid variables in these galaxies, which allows distance calibration. The goal of the task is to use the data to estimate the local rate of expansion of the Universe — Hubble's constant.
 
 <p align="center">
-  <img src="https://github.com/otheiner/physics-analysis-
-    benchmarks/blob/main/2_hubble_constant/input_data/observed_spectra/GID077948.png" width="300">
+  <img src="https://github.com/otheiner/physics-analysis-benchmarks/blob/main/2_hubble_constant/input_data/observed_spectra/GID077948.png" width="300">
 </p>
 
 3. **Reconstruction of invariant mass of an unknown particle** ⚛️

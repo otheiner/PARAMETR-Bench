@@ -7,7 +7,7 @@ The provided dataset contains quality control records from PrecisionS&C, a compa
 
 To ensure only compliant equipment is delivered to customers, randomly selected power supplies are subjected to quality control testing prior to shipment. The testing protocol is as follows: a reference power supply calibrated to deliver AC current at exactly 100 Hz is connected to an oscilloscope in parallel with the unit under evaluation. The phase relationship between the two signals is adjusted until a closed Lissajous figure is observed. A power supply is classified as faulty if it cannot be paired with any single inductor coil manufactured by PrecisionS-C to achieve a total inductor impedance of magnitude 377 ohm rounded to three significant figures — i.e. the computed value must fall in the range [376.50; 377.5) ohm. Any tested unit identified as faulty must be documented in the quality assurance form. Units which were not tested do not have a measurement ID and are assumed not to be faulty.
 
-The dataset is provided as a .zip archive containing a table summarizing all measurements conducted during the specified time period, Lissajous figure images with filenames matched to measurement IDs in the table, and a quality assurance form template.
+The dataset contains a table summarizing all measurements conducted during the specified time period, Lissajous figure images with filenames matched to measurement IDs in the table, and a quality assurance form template.
 
 Produce the following outputs:
 
@@ -19,6 +19,7 @@ ________________________________________________________
 ## Files provided
 
 - `measurements.csv` — CSV file with all the produced units and their manufacturing details
+- `QA_form.pdf` - quality assurance form that has to be filled but serves mainly as a check of the solution. Note that golden thruth doesn't generate this .pdf file and it only provides CSV file with the data that would be filled to the form.
 - `oscilloscope_output/` — folder containing picture with the measurements - file name is the measurement_id as stated in `measurement.csv` file
 
 ________________________________________________________

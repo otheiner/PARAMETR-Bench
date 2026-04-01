@@ -10,7 +10,7 @@ Even if the tasks are grounded in real analyses, the structure and the format of
 - Parsing large CSV or PDF files (the latter can be tricky with big tables, since LLMs usually need an intermediate step of converting them to a text file, which is prone to errors)
 - Extracting data from images with features that are not easy for LLMs to retrieve
 - Data are simulated with known parameters, so the ground truth is known and well-defined
-- Data simulate real physics using random seeds, so these exact data have never been seen by LLMs 
+- Data simulate real physics using random seeds — each run of the notebook generates a completely new dataset that no LLM has ever seen. The samples shown in this repo are smaller examples for browsing purposes only. 
 
 Tasks are designed such that the user can define the size of the generated input data and they allow tweaking parameters, such as noise or simulating reading error, which can easily make the task more difficult. Randomness is introduced into the data generation pipeline which makes it easy to generate multiple different datasets. Ground truth answer is generated together with the dataset.
 

@@ -20,15 +20,16 @@ from abc import ABC, abstractmethod
 
 
 # ─────────────────────────────────────────────────────────────
-# MetaRubric
+# Metarubric
 # ─────────────────────────────────────────────────────────────
 @dataclass
-class MetaRubric:
+class Metarubric:
     """
     A template + dataframe that unpacks into individual rubric criteria.
     
     Attributes:
         key:                    - short snake_case key to identify the metarubric
+        source:                 - name of the dataframe in ground_truth.json that contains the data for this metarubric
         name:                   - short human readable name
         description:            - f-string with {column_name} placeholders - this gets unpacked 
                                   to individual rubric criteria by unpacking metarubric
@@ -41,6 +42,7 @@ class MetaRubric:
     """
 
     key :             str
+    source:           str
     name:             str
     description:      str
     weight:           float = 1.0
@@ -63,12 +65,12 @@ class MetaRubric:
     
 
 # ─────────────────────────────────────────────────────────────
-# TaskResult
+# MetarubricResult
 # ─────────────────────────────────────────────────────────────
 @dataclass
-class TaskResult:
+class MetarubricResult:
     """
-    Result of evaluating one MetaRubric.
+    Result of evaluating one Metarubric.
     
     Attributes:
         metarubric_name: name of the metarubric
@@ -125,20 +127,21 @@ class Task(ABC):
         generate_task()         — physics simulation, populates
                                   input_data/, ground_truth/,
                                   and metarubrics dataframe
-        populate_metarubrics()  — populates metarubrics dict with MetaRubric objects where each row
-                                  corresponds to data used to create one rubric item
     
     Subclasses should NOT override:
         _load_config()          - loads data generation parameters from config.json
-        load_metarubrics()      - loads metarubric templates from metarubrics.json - helper 
-                                  function that can be used in populate_metarubrics() to avoid boilerplate 
-                                  code and prevents mismatch between metarubrics.json and code
+        save_ground_truth()     - saves ground truth dataframes to ground_truth.json, should be 
+                                  called at the end of generate_task() after populating self.ground_truth
         get_params()            - returns generating parameters for given difficulty level
         get_prompt()            - loads task prompt from README.md
         get_input_files()       - loads input data files and makes them ready to send to the LLM
-        validate_metarubrics()  - validates the metarubrics (mismatches in metarubrics dictionary 
-                                  and column names in metarubric.json)
-        generate_rubrics()      - generates rubrics.json - data rows from MetaRubric objects are 
+        _load_metarubrics()     - loads metarubric templates from metarubrics.json - helper 
+                                 function  used in populate_metarubrics() 
+        populate_metarubrics()  — populates metarubrics dict with Metarubric objects where each row
+                                  corresponds to data used to create one rubric item
+        validate_metarubrics()  - validates the metarubrics (checks for mismatches in metarubrics.json and
+                                  ground_truth.json)
+        generate_rubrics()      - generates rubrics.json - data rows from Metarubric objects are 
                                   unpacked to individual rubric criteria and saved to rubrics.json
         evaluate()              - evaluates model response against rubrics.json
     """
@@ -156,7 +159,7 @@ class Task(ABC):
         self.ground_truth: dict[str, pd.DataFrame] = {}
 
         # Populated by populate_metarubrics()
-        self.metarubrics: dict[str, MetaRubric] = {}
+        self.metarubrics: dict[str, Metarubric] = {}
 
         # Directory shortcuts
         self.input_dir  = self.folder / 'input_data'
@@ -174,16 +177,6 @@ class Task(ABC):
     def generate_task(self):
         """
         Generate input data and ground truth.
-        
-        Must:
-            #TODO
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def populate_metarubrics(self):
-        """
-        #TODO
         
         Must:
             #TODO
@@ -211,28 +204,34 @@ class Task(ABC):
         
         # Merge — difficulty params override fixed params if same key
         return {**fixed, **difficulty}
-    
+
 
     # ─────────────────────────────────────────
-    # Creating metarubrics objects based on 
-    # metarubrics.json
+    # Dumps ground truth to ground_truth/ground_truth.json
     # ─────────────────────────────────────────
-    def load_metarubrics(self) -> dict[str, MetaRubric]:
-        """Load metarubric templates from metarubrics.json and return dict of MetaRubric objects."""
-        with open(self.folder / 'metarubrics.json') as f:
-            data = json.load(f)
-
-        metarubrics = {}
-        for metarubric in data.get('metarubrics', []):  # ensure key exists
-            mr = MetaRubric(
-                key            = metarubric['key'],
-                name           = metarubric['name'],
-                description    = metarubric['description'],
-                weight         = metarubric.get('weight', 1.0)
+    def save_ground_truth(self):
+        """
+        Persist self.ground_truth to ground_truth/ground_truth.json.
+        
+        Call at the end of generate_task() after populating self.ground_truth.
+        self.ground_truth must be a dict of DataFrames.
+        """
+        if not self.ground_truth:
+            raise ValueError(
+                "self.ground_truth is empty. "
+                "Populate it in generate_task() before calling save_ground_truth()."
             )
-            metarubrics[mr.key] = mr
-
-        return metarubrics
+        
+        gt_json = {
+            key: df.to_dict(orient='records')
+            for key, df in self.ground_truth.items()
+        }
+        
+        gt_path = self.ground_truth_dir / 'ground_truth.json'
+        with open(gt_path, 'w') as f:
+            json.dump(gt_json, f, indent=2)
+        
+        print(f"✓ Ground truth saved: {gt_path}")
 
 
     # ─────────────────────────────────────────
@@ -285,42 +284,51 @@ class Task(ABC):
     
 
     # ─────────────────────────────────────────
+    # Creating dictionary of metarubrics objects based on 
+    # metarubrics.json
+    # ─────────────────────────────────────────
+    def _load_metarubrics(self) -> dict[str, Metarubric]:
+        """Load metarubric templates from metarubrics.json and return dict of MetaRubric objects."""
+        with open(self.folder / 'metarubrics.json') as f:
+            data = json.load(f)
+
+        metarubrics = {}
+        for metarubric in data.get('metarubrics', []):  # ensure key exists
+            mr = Metarubric(
+                key            = metarubric['key'],
+                source         = metarubric['source'],
+                name           = metarubric['name'],
+                description    = metarubric['description'],
+                weight         = metarubric.get('weight', 1.0)
+            )
+            metarubrics[mr.key] = mr
+
+        return metarubrics
+
+
+    # ─────────────────────────────────────────
     # Validate rubrics - check that metarubrics.json
     # matches python code
     # ─────────────────────────────────────────
     def validate_metarubrics(self):
-        """
-        Validate that all metarubric dataframes are populated and 
-        columns match template placeholders.
-        
-        Call this before generate_rubrics() and before any API calls
-        to catch errors early without spending tokens.
-        
-        Raises ValueError with clear message if validation fails.
-        """
         errors = []
         
-        for key, mr in self.metarubrics.items():
-
-            # Check dataframe was populated
+        for mr in self.metarubrics.values():
             if len(mr.dataframe) == 0:
                 errors.append(
-                    f"MetaRubric '{mr.name}' (key='{key}'): "
+                    f"Metarubric '{mr.key}': "
                     f"dataframe is empty. "
-                    f"Did populate_metarubrics() fill it?"
+                    f"Source was '{mr.source}' — did populate_rubrics() run?"
                 )
                 continue
-
-            # Check columns match template placeholders
-            missing_cols = set(mr.columns) - set(mr.dataframe.columns)
-            if missing_cols:
+            
+            missing = set(mr.columns) - set(mr.dataframe.columns)
+            if missing:
                 errors.append(
-                    f"MetaRubric '{mr.name}' (key='{key}'): "
-                    f"dataframe missing columns {missing_cols}. "
-                    f"Template needs {mr.columns}, "
-                    f"dataframe has {list(mr.dataframe.columns)}"
+                    f"Metarubric '{mr.name}': "
+                    f"missing columns {missing}"
                 )
-
+        
         if errors:
             raise ValueError(
                 "Metarubric validation failed:\n" +
@@ -328,6 +336,43 @@ class Task(ABC):
             )
         
         print(f"✓ Metarubrics validated: {self.folder.name}")
+
+
+    # ─────────────────────────────────────────
+    # Popoulate metarubrics with data from ground_truth.json
+    # ─────────────────────────────────────────
+    def populate_metarubrics(self):
+        """
+        Load metarubric templates and fill dataframes from ground_truth.
+        Uses mr.source to look up the correct DataFrame in ground_truth.
+        Uses mr.columns to select only the columns needed by the template.
+        """
+        self.metarubrics = self._load_metarubrics()
+        
+        for mr in self.metarubrics.values():
+            if mr.source not in self.ground_truth:
+                raise ValueError(
+                    f"Data for metarubric '{mr.key}' with source '{mr.source}' "
+                    f"not found in ground_truth. "
+                    f"Available: {list(self.ground_truth.keys())}"
+                )
+            
+            df = self.ground_truth[mr.source]
+            
+            # Validate columns exist in source DataFrame
+            missing = set(mr.columns) - set(df.columns)
+            if missing:
+                raise ValueError(
+                    f"Metarubric '{mr.key}': source '{mr.source}' "
+                    f"missing columns {missing}. "
+                    f"Template needs {mr.columns}, "
+                    f"DataFrame has {list(df.columns)}"
+                )
+            
+            # Fill with only the columns needed by the template
+            mr.dataframe = df[mr.columns].copy()
+
+        print(f"✓ Metarubrics populated: {self.folder.name}")
 
 
     # ─────────────────────────────────────────
@@ -343,6 +388,8 @@ class Task(ABC):
         """
         rubrics_data = {
             'task':        self.folder.name,
+            'difficulty':  self.difficulty,
+            'seed':        self.seed,
             'metarubrics': [
                 {
                     'key':    mr.key,
@@ -361,4 +408,5 @@ class Task(ABC):
         rubrics_path = self.ground_truth_dir / 'rubrics.json'
         with open(rubrics_path, 'w') as f:
             json.dump(rubrics_data, f, indent=2)
+
         print(f"✓ Rubrics saved: {rubrics_path}")

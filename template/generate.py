@@ -15,12 +15,12 @@ from src.task import Task
 
 class TaskName(Task):
     """
-    [DESCRIBE WHAT THIS TASK SIMULATES AND WHAT THE MODEL MUST DO]
+    <FILL-THIS-IN> DESCRIBE WHAT THIS TASK SIMULATES AND WHAT THE MODEL MUST DO
     """
 
     def generate_task(self):
         """
-        DESCRIBE HOW THE DATA IS GENERATED, WHAT THE GROUND TRUTH IS AND HOW THE 
+        <FILL-THIS-IN> DESCRIBE HOW THE DATA IS GENERATED, WHAT THE GROUND TRUTH IS AND HOW THE 
         TASK IS POPULATED
         """
         # TODO
@@ -33,7 +33,7 @@ class TaskName(Task):
 
     def populate_metarubrics(self):
         """
-        THIS METHOD POPULATES METARUBRICS WITH DATA USED TO GENERATE RUBRICS.
+        <FILL-THIS-IN> THIS METHOD POPULATES METARUBRICS WITH DATA USED TO GENERATE RUBRICS.
         """
         # TODO
         # This method needs to populate the metarubrics dict with MetaRubric objects 

@@ -94,8 +94,9 @@ def main():
                 difficulty  = args.difficulty,
                 seed        = seed
             )
-            
+
             task.generate_task()  # generate data + ground truth
+            task.save_ground_truth() # dump ground truth to ground_truth.json
             task.populate_metarubrics()  # fill in metarubrics based on generated data
             task.validate_metarubrics()  # validate the metarubrics
             task.generate_rubrics()  # generate rubrics based on metarubrics and templates

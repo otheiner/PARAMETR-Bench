@@ -228,8 +228,8 @@ class Task(ABC):
         }
         
         gt_path = self.ground_truth_dir / 'ground_truth.json'
-        with open(gt_path, 'w') as f:
-            json.dump(gt_json, f, indent=2)
+        with open(gt_path, 'w', encoding='utf-8') as f:
+            json.dump(gt_json, f, indent=2, default=float)
         
         print(f"✓ Ground truth saved: {gt_path}")
 

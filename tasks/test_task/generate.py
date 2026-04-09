@@ -1,8 +1,9 @@
 """
 Task: Test task
-Description: <FILL-THIS-IN>
+Description: This is the test task to test the framework. The model needs 
+             to compute the average of given numbers.
 
-Author: <FILL-THIS-IN>
+Author: Ondrej Theiner
 """
 
 import numpy as np

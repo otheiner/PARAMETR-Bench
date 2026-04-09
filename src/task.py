@@ -58,6 +58,9 @@ class Metarubric:
     
     def unpack(self) -> list[str]:
         """Expand description with each row of dataframe."""
+        if self.source == 'none':
+            return [self.description]
+
         return [
             self.description.format(**row.to_dict())
             for _, row in self.dataframe.iterrows()
@@ -314,7 +317,7 @@ class Task(ABC):
         errors = []
         
         for mr in self.metarubrics.values():
-            if len(mr.dataframe) == 0:
+            if len(mr.dataframe) == 0 and mr.source != 'none':
                 errors.append(
                     f"Metarubric '{mr.key}': "
                     f"dataframe is empty. "
@@ -350,27 +353,28 @@ class Task(ABC):
         self.metarubrics = self.load_metarubrics()
         
         for mr in self.metarubrics.values():
-            if mr.source not in self.ground_truth:
+            if mr.source not in self.ground_truth and mr.source != 'none':
                 raise ValueError(
                     f"Data for metarubric '{mr.key}' with source '{mr.source}' "
                     f"not found in ground_truth. "
                     f"Available: {list(self.ground_truth.keys())}"
                 )
             
-            df = self.ground_truth[mr.source]
-            
-            # Validate columns exist in source DataFrame
-            missing = set(mr.columns) - set(df.columns)
-            if missing:
-                raise ValueError(
-                    f"Metarubric '{mr.key}': source '{mr.source}' "
-                    f"missing columns {missing}. "
-                    f"Template needs {mr.columns}, "
-                    f"DataFrame has {list(df.columns)}"
-                )
-            
-            # Fill with only the columns needed by the template
-            mr.dataframe = df[mr.columns].copy()
+            if mr.source != 'none':
+                df = self.ground_truth[mr.source]
+                
+                # Validate columns exist in source DataFrame
+                missing = set(mr.columns) - set(df.columns)
+                if missing:
+                    raise ValueError(
+                        f"Metarubric '{mr.key}': source '{mr.source}' "
+                        f"missing columns {missing}. "
+                        f"Template needs {mr.columns}, "
+                        f"DataFrame has {list(df.columns)}"
+                    )
+                
+                # Fill with only the columns needed by the template
+                mr.dataframe = df[mr.columns].copy()
 
         print(f"✓ Metarubrics populated: {self.folder.name}")
 
@@ -395,7 +399,7 @@ class Task(ABC):
                     'key':    mr.key,
                     'name':   mr.name,
                     'weight': mr.weight,
-                    'total':  len(mr.dataframe),
+                    'total':  len(mr.dataframe) if mr.source != 'none' else 1,
                     'rubrics': [
                         {'id': i + 1, 'criterion': criterion}
                         for i, criterion in enumerate(mr.unpack())

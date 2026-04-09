@@ -3,16 +3,23 @@
         {
             "key": "found_numbers",
             "source": "numbers",
-            "name": "Found the correct numbers",
-            "description": "Did the model correctly find the numbers {input_number}?",
-            "weight": 1.0
+            "name": "Found the correct numbers.",
+            "description": "Did the model correctly find the number {input_number}?",
+            "weight": 5.0
         },
         {
             "key": "computed_average",
             "source": "final_result",
-            "name": "Computed correctly the average",
+            "name": "Computed correctly the average.",
             "description": "Did the model correctly compute the average {average}?",
             "weight": 2.0
+        },
+        {
+            "key": "file_format_test",
+            "source": "none",
+            "name": "Returned correct file type.",
+            "description": "Did the model output file average.txt?",
+            "weight": 1.0
         }
 
     ]

@@ -1,17 +1,15 @@
 ## Problem definition
 
-<Here goes text of your prompt>
+Provided file contains numbers and you are supposed to list all of them in the separate file called `numbers_found.txt` with one number per line. Then take these numbers and compute their average. Output the answer to the file called `answer.txt` with your final answer.
 
 Produce the following outputs:
 
-1. <Required file no. 1>
-2. <Required file no. 2>
+1. `numbers_found.txt` - numbers found in the input file
+2. `answer.txt` - file with your final answer
 ________________________________________
 
 ## Files provided
 
-<Plese, describe structure of the input data>
+The input data is one text file with numbers that should be used to compute the average.
 
-- `<filename1.png>` — input file 1 
-- `<filename2.csv>` — input file 2
-- `<input_folder/>` — folder containing pictures for the analysis
+- `input_numbers.txt` — File with numbers used to compute average

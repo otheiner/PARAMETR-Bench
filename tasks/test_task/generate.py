@@ -30,19 +30,18 @@ class TestTask(Task):
         values = [np.random.rand() + FIXED_CONSTANT for _ in range(N_NUMBERS)]
 
         self.ground_truth['numbers'] = pd.DataFrame({
-            'input_numbers': values
+            'input_number': values
         })
 
         # Compute average
-        avg = self.ground_truth['numbers']['input_numbers'].mean()
+        avg = self.ground_truth['numbers']['input_number'].mean()
 
         self.ground_truth['final_result'] = pd.DataFrame({
             'average': [avg]
         })
 
         with open(self.input_dir / 'input_numbers.txt', 'w') as f:
-            for num in self.ground_truth['numbers']['input_numbers']:
-                print(num)
+            for num in self.ground_truth['numbers']['input_number']:
                 f.write(f"{num}\n") 
         
         with open(self.ground_truth_dir / 'answer.txt', 'w') as f:

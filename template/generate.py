@@ -30,15 +30,3 @@ class TaskName(Task):
         # populate_metarubrics method.
 
         raise NotImplementedError("Implement data generation")
-
-    def populate_metarubrics(self):
-        """
-        <FILL-THIS-IN> THIS METHOD POPULATES METARUBRICS WITH DATA USED TO GENERATE RUBRICS.
-        """
-        # TODO
-        # This method needs to populate the metarubrics dict with MetaRubric objects 
-        # where each row corresponds to data used to create one rubric item. In order 
-        # to avoid mismatch between metarubrics.json and the code, load_metarubrics()
-        # from Task class should be used.
-
-        raise NotImplementedError("Implement data generation")

@@ -133,7 +133,6 @@ class TaskResults:
         timestamp:           timestamp of when the evaluation was run
         metarubric_results:  list of metarubric results
     """
-    metarubric_results: list[MetarubricResult]
     task_name:          str
     seed:               int
     difficulty:         str
@@ -141,6 +140,7 @@ class TaskResults:
     judge:              str
     git_commit:         str
     timestamp:          str
+    metarubric_results: list[MetarubricResult]
 
     @property
     def weighted_success_rate(self) -> float:

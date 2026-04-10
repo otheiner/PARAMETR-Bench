@@ -1,11 +1,22 @@
 ## Problem definition
 
-Provided file contains numbers and you are supposed to list all of them in the separate file called `numbers_found.txt` with one number per line. Then take these numbers and compute their average. Output the answer to the file called `answer.txt` with your final answer.
+The provided file contains numbers. You must:
 
-Produce the following outputs:
+1. List all numbers you found, one per line
+2. Compute their average
+3. State your final answer explicitly
+_______________________________________
+## Output format
 
-1. `numbers_found.txt` - numbers found in the input file
-2. `answer.txt` - file with your final answer
+Structure your response exactly as follows:
+
+NUMBERS FOUND:
+<number 1>
+<number 2>
+...
+
+AVERAGE:
+<your computed average>
 ________________________________________
 
 ## Files provided

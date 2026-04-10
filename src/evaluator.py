@@ -53,9 +53,17 @@ class Evaluator:
             response = litellm.completion(
                 model    = model,
                 messages = messages,
-                **task.get_model_params() if hasattr(task, 'get_model_params') else {}
+                temperature = 0.0
             )
-            return response.choices[0].message.content
+            model_output = response.choices[0].message.content
+    
+            print(f"\n{'─' * 50}")
+            print(f"MODEL OUTPUT ({model}):")
+            print(f"{'─' * 50}")
+            print(model_output)
+            print(f"{'─' * 50}\n")
+            
+            return model_output
 
         except litellm.AuthenticationError:
             print(f"✗ Authentication failed for '{model}' — check your API key")

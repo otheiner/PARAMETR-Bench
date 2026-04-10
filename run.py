@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--task',          type=str,
                         help='Specific task folder names. Omit to run all.')
     parser.add_argument('--models',        type=str, nargs='+',
-                        default='ollama/llama3.2')
+                        default=['ollama/llama3.2'])
     parser.add_argument('--judge',         type=str,
                         default='ollama/llama3.2')
     parser.add_argument('--difficulty',    type=str,

@@ -1,9 +1,11 @@
 import argparse
+import subprocess
 import importlib
 import inspect
+from datetime import datetime
 from pathlib import Path
-from src.task import Task
-#from src.evaluator import Evaluator
+from src.task import Task, BenchmarkResults
+from src.evaluator import Evaluator
 
 
 def parse_args():
@@ -11,8 +13,8 @@ def parse_args():
         description='Evaluate LLMs on physics benchmark tasks.'
     )
     parser.add_argument('--task',          type=str,
-                        help='Specific task folder name. Omit to run all.')
-    parser.add_argument('--model',         type=str,
+                        help='Specific task folder names. Omit to run all.')
+    parser.add_argument('--models',        type=str, nargs='+',
                         default='ollama/llama3.2')
     parser.add_argument('--judge',         type=str,
                         default='ollama/llama3.2')
@@ -26,6 +28,19 @@ def parse_args():
     parser.add_argument('--list',          action='store_true',
                         help='List discovered tasks and exit.')
     return parser.parse_args()
+
+
+def get_git_hash() -> str:
+    try:
+        return subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD']
+        ).decode().strip()
+    except FileNotFoundError:
+        print("⚠  git not found — commit hash unavailable")
+        return 'unknown'
+    except subprocess.CalledProcessError:
+        print("⚠  git command failed — are you in a git repository?")
+        return 'unknown'
 
 
 def discover_tasks(tasks_dir='tasks') -> dict:
@@ -67,7 +82,6 @@ def main():
             print(f"  {name}")
         return
     
-    # Select tasks to run
     if args.task:
         if args.task not in all_tasks:
             print(f"✗ Task '{args.task}' not found.")
@@ -77,10 +91,20 @@ def main():
     else:
         task_names = list(all_tasks.keys())
     
-    # evaluator = Evaluator()
+    if not args.validate_only:
+        evaluator = Evaluator()
+        benchmark = BenchmarkResults(
+            task_results = [],
+            models       = args.models,
+            judge        = args.judge,
+            difficulty   = args.difficulty,
+            seeds        = args.seeds,
+            git_commit   = get_git_hash(),
+            timestamp    = datetime.now().isoformat()
+    )
     
     for task_name in task_names:
-        task_cls = all_tasks[task_name]
+        task_class = all_tasks[task_name]
         
         for seed in args.seeds:
             print(f"\n{'─'*50}")
@@ -89,7 +113,7 @@ def main():
             print(f"Seed:       {seed}")
             
             # ── Setup phase ───────────────────────────────
-            task = task_cls(
+            task = task_class(
                 task_folder = f'tasks/{task_name}',
                 difficulty  = args.difficulty,
                 seed        = seed
@@ -105,20 +129,26 @@ def main():
                 print(f"✓ Validated {task_name} — skipping model evaluation")
                 continue
             
-            # ── Evaluation phase ──────────────────────────
-            print(f"Model:      {args.model}")
-            print(f"Judge:      {args.judge}")
-            
-    #         results = evaluator.run(
-    #             task  = task,
-    #             model = args.model,
-    #             judge = args.judge
-    #         )
-            
-    #         # Print summary
-    #         print(f"\nResults:")
-    #         for r in results:
-    #             print(f"  {r}")
+            for tested_model in args.models:
+                # ── Evaluation phase ──────────────────────────
+                print(f"Model:      {tested_model}")
+                print(f"Judge:      {args.judge}")
+                
+                result = evaluator.run(
+                    task  = task,
+                    model = tested_model,
+                    judge = args.judge
+                )
+
+                print(result)
+                result.save()
+                benchmark.task_results.append(result)
+
+    # ── Final summary ─────────────────────────────────────
+    if not args.validate_only:
+        print(f"\n{'═' * 50}")
+        print(benchmark)
+        benchmark.save()
 
 
 if __name__ == '__main__':

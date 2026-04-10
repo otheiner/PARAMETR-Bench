@@ -282,26 +282,6 @@ class BenchmarkResults:
             float(min(1.0, mean + z * se))
         )
 
-    def __str__(self) -> str:
-        lo, hi = self.confidence_interval
-        lines = []
-        for tr in self.task_results:
-            lines.append(str(tr))
-            lines.append('')
-        lines.append('═' * 50)
-        lines.append(f"  Models:     {', '.join(self.models)}")
-        lines.append(f"  Judge:      {self.judge}")
-        lines.append(f"  Difficulty: {self.difficulty}")
-        lines.append(f"  Seeds:      {self.seeds}")
-        lines.append(f"  Commit:     {self.git_commit}  |  {self.timestamp}")
-        lines.append('═' * 50)
-        lines.append(
-            f"  Benchmark total: {self.success_rate:.1%} "
-            f"  95% CI: [{lo:.1%}, {hi:.1%}]  "
-            f"({len(self.task_results)} runs)"
-        )
-        return '\n'.join(lines)
-
     def results_by_model(self) -> dict[str, list[TaskResults]]:
         """Group task results by model for per-model analysis."""
         by_model = {}
@@ -311,11 +291,43 @@ class BenchmarkResults:
             by_model[tr.model].append(tr)
         return by_model
 
+    def __str__(self) -> str:
+        lines = []
+
+        # Run metadata 
+        lines.append('═' * 50)
+        lines.append(f"  Judge:      {self.judge}")
+        lines.append(f"  Difficulty: {self.difficulty}")
+        lines.append(f"  Seeds:      {self.seeds}")
+        lines.append(f"  Commit:     {self.git_commit}  |  {self.timestamp}")
+        lines.append('═' * 50)
+
+        # Per-model summary 
+        for model, results in self.results_by_model().items():
+            rates     = [tr.weighted_success_rate for tr in results]
+            mean      = float(np.mean(rates))
+            se        = float(np.std(rates, ddof=1) / np.sqrt(len(rates))) if len(rates) > 1 else 0.0
+            z         = stats.norm.ppf(0.975)
+            lo        = float(max(0.0, mean - z * se))
+            hi        = float(min(1.0, mean + z * se))
+
+            lines.append(f"  Model: {model}")
+            lines.append(f"  {'─' * 46}")
+            for tr in results:
+                lines.append(str(tr))
+                lines.append('')
+            lines.append(
+                f"  {model} total: {mean:.1%} "
+                f"  95% CI: [{lo:.1%}, {hi:.1%}]  "
+                f"({len(results)} runs)"
+            )
+            lines.append('')
+
+        return '\n'.join(lines)
+
     def to_dict(self) -> dict:
-        # Group results by model for per-model breakdown
-        by_model = self.results_by_model()
         model_summaries = {}
-        for model, results in by_model.items():
+        for model, results in self.results_by_model().items():
             rates        = [tr.weighted_success_rate for tr in results]
             mean         = float(np.mean(rates))
             se           = float(np.std(rates, ddof=1) / np.sqrt(len(rates))) if len(rates) > 1 else 0.0

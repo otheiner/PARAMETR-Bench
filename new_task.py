@@ -48,7 +48,7 @@ def create_task(name: str, author: str, description: str):
     print(f"  1. Implement generate_task() in tasks/{name}/generate.py")
     print(f"  2. Fill in metarubrics.json templates")
     print(f"  3. Fill in config.json difficulty parameters")
-    print(f"  4. Run: python evaluate.py --task {name} --validate-only")
+    print(f"  4. Run: python run.py --task {name} --validate-only")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

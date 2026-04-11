@@ -160,9 +160,9 @@ def main():
 
     # ── Final summary ─────────────────────────────────────
     if not args.validate_only:
-        print(f"\n{'═' * 50}")
+        print(f"\n{'=' * 50}")
         print("BENCHMARK RESULTS")
-        print('═' * 50)
+        print('=' * 50)
         print(benchmark)
         benchmark.save()
 

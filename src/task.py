@@ -487,8 +487,8 @@ class Task(ABC):
     # Loading prompt
     # ─────────────────────────────────────────
     def get_prompt(self) -> str:
-        """Load task prompt from README.md."""
-        return (self.folder / 'README.md').read_text()
+        """Load task prompt from prompt.md."""
+        return (self.folder / 'prompt.md').read_text()
     
 
     # ─────────────────────────────────────────

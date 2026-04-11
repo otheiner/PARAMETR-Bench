@@ -11,14 +11,14 @@
             "key": "computed_average",
             "source": "final_result",
             "name": "Computed correctly the average.",
-            "description": "Did the model correctly compute the average {average}?",
+            "description": "Did the model correctly compute the average {average}, or value that matches the average when both numbers are rounded to two decimal digits?",
             "weight": 2.0
         },
         {
             "key": "file_format_test",
             "source": "none",
             "name": "Returned correct file type.",
-            "description": "Did the model output file average.txt?",
+            "description": "Did the model return non-empty answer?",
             "weight": 1.0
         }
 

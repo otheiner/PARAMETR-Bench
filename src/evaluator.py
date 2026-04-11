@@ -100,26 +100,33 @@ class Evaluator:
 
     def _judge_metarubric(self, rubrics: list[str],
                            model_output: str,
-                           judge: str) -> int:
-        """Judge all criteria in one metarubric — one call per criterion."""
-        passed = 0
-        for rubric in rubrics:
-            if self._judge_single(rubric, model_output, judge):
-                passed += 1
-        return passed
+                           judge: str) -> int:    
+        """
+        Judge all criteria in one metarubric.
+        Uses batch call for API judges, single calls for local models.
+        """
+        if judge.startswith('ollama/'):
+            # Local models — one call per rubric, more reliable
+            passed = 0
+            for rubric in rubrics:
+                if self._judge_single(rubric, model_output, judge):
+                    passed += 1
+            return passed
+        else:
+            # API models — batch all rubrics in one call
+            return self._judge_batch(rubrics, model_output, judge)
 
     def _judge_single(self, rubric: str,
                        model_output: str,
                        judge: str) -> bool:
         """One rubric, one YES/NO question — simplest possible judge call."""
-        prompt = f"""Answer YES or NO only.
+        prompt = f"""Model response:
+                    {model_output}
 
-Criterion: {rubric}
+                    Criterion:
+                    {rubric}
 
-Model response:
-{model_output}
-
-Answer (YES or NO):"""
+                    Answer YES or NO only."""
 
         try:
             response = litellm.completion(
@@ -133,3 +140,59 @@ Answer (YES or NO):"""
         except Exception as e:
             print(f"⚠  Judge call failed: {e} — counting as not passed")
             return False
+        
+    def _judge_batch(self, rubrics: list[str],
+                  model_output: str,
+                  judge: str) -> int:
+        """
+        Send all rubrics in one call — for capable API models.
+        Returns number of criteria passed.
+        """
+        numbered = '\n'.join(
+            f"{i+1}. {r}" for i, r in enumerate(rubrics)
+        )
+        
+        prompt = f"""You are evaluating a scientific analysis response.
+
+                    For each numbered criterion below, answer YES or NO.
+                    Return ONLY a JSON array of booleans in the same order as the criteria.
+                    No explanation. No markdown. No extra text.
+
+                    Example for 3 criteria: [true, false, true]
+
+                    Model response:
+                    {model_output}
+
+                    Criteria:
+                    {numbered}
+
+                    Answer JSON array only."""
+
+        try:
+            response = litellm.completion(
+                model       = judge,
+                messages    = [{'role': 'user', 'content': prompt}],
+                temperature = 0.0
+            )
+            raw = response.choices[0].message.content.strip()
+            
+            # Strip markdown if present
+            raw = re.sub(r'```json\s*', '', raw)
+            raw = re.sub(r'```\s*',     '', raw)
+            raw = raw.strip()
+            
+            verdicts = json.loads(raw)
+            
+            if len(verdicts) != len(rubrics):
+                print(f"⚠  Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics")
+                return 0
+            
+            return sum(1 for v in verdicts if v)
+        
+        except json.JSONDecodeError:
+            print(f"⚠  Judge parse failed — raw response: {raw[:200]}")
+            return 0
+        
+        except Exception as e:
+            print(f"⚠  Judge call failed: {e}")
+            return 0

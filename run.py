@@ -1,3 +1,7 @@
+# Load API keys from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 import argparse
 import importlib
 import inspect
@@ -7,7 +11,6 @@ from pathlib import Path
 from src.task import Task, BenchmarkResults
 from src.evaluator import Evaluator
 from src.utils import get_git_hash
-
 
 def parse_args():
     parser = argparse.ArgumentParser(

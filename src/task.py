@@ -415,11 +415,24 @@ class Task(ABC):
         self.input_dir  = self.folder / 'input_data'
         self.ground_truth_dir     = self.folder / 'ground_truth'
 
-        # ── Clean and recreate directories ────────────────────
-        if self.input_dir.exists():
-            shutil.rmtree(self.input_dir)
-        if self.ground_truth_dir.exists():
-            shutil.rmtree(self.ground_truth_dir)
+        # Clear contents in input_databut preserve directory and .gitignore
+        for path in self.input_dir.iterdir():
+            if path.name == '.gitignore':
+                continue
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+
+        # Clear contents in ground_truth but preserve directory and .gitignore
+        for path in self.ground_truth_dir.iterdir():
+            if path.name == '.gitignore':
+                continue
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+
         self.input_dir.mkdir(parents=True, exist_ok=True)
         self.ground_truth_dir.mkdir(parents=True, exist_ok=True)
 

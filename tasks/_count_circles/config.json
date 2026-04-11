@@ -4,7 +4,7 @@
   "difficulties": {
     "easy":   {"N_FILES": 2, "N_CIRCLES": 3},
     "medium": {"N_FILES": 4, "N_CIRCLES": 7},
-    "hard":   {"N_FILES": 10, "N_CIRCLES": 14}
+    "hard":   {"N_FILES": 10, "N_CIRCLES": 20}
   },
   "fixed_parameters": {}
 }

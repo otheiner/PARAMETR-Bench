@@ -17,7 +17,7 @@
         {
             "key": "file_format_test",
             "source": "none",
-            "name": "Returned correct file type.",
+            "name": "Returned answer.",
             "description": "Did the model return non-empty answer?",
             "weight": 1.0
         }

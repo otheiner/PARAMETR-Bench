@@ -384,7 +384,7 @@ class Task(ABC):
         save_ground_truth()     - saves ground truth dataframes to ground_truth.json, should be 
                                   called at the end of generate_task() after populating self.ground_truth
         get_params()            - returns generating parameters for given difficulty level
-        get_prompt()            - loads task prompt from README.md
+        get_prompt()            - loads task prompt from prompt.md
         get_input_files()       - loads input data files and makes them ready to send to the LLM
         load_metarubrics()      - loads metarubric templates from metarubrics.json - helper 
                                   function  used in populate_metarubrics() 

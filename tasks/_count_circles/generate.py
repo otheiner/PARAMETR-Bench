@@ -69,7 +69,7 @@ class TestTask(Task):
 
         records = []
         for i in range(1, N_FILES + 1):
-            positions = self._place_circles(N_CIRCLES)
+            positions = self._place_circles(np.random.randint(1, N_CIRCLES + 1))
             n_placed  = len(positions)
             self._draw_image(positions, self.input_dir / f'{i}.png')
             records.append({'filename': f'{i}.png', 'n_circles': n_placed})

@@ -14,6 +14,7 @@ import pandas as pd
 import base64
 from pathlib import Path
 from scipy import stats
+import shutil
 
 from dataclasses import dataclass, field
 from statsmodels.stats.proportion import proportion_confint
@@ -414,7 +415,11 @@ class Task(ABC):
         self.input_dir  = self.folder / 'input_data'
         self.ground_truth_dir     = self.folder / 'ground_truth'
 
-        # Create directories if they don't exist
+        # ── Clean and recreate directories ────────────────────
+        if self.input_dir.exists():
+            shutil.rmtree(self.input_dir)
+        if self.ground_truth_dir.exists():
+            shutil.rmtree(self.ground_truth_dir)
         self.input_dir.mkdir(parents=True, exist_ok=True)
         self.ground_truth_dir.mkdir(parents=True, exist_ok=True)
 

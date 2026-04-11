@@ -1,0 +1,35 @@
+{
+  "task": "_count_circles",
+  "difficulty": "easy",
+  "seed": 2,
+  "metarubrics": [
+    {
+      "key": "count_circles",
+      "name": "Counted circles correctly in each image",
+      "weight": 2.0,
+      "total": 2,
+      "rubrics": [
+        {
+          "id": 1,
+          "criterion": "Did the model correctly count 1 circles in the image 1.png?"
+        },
+        {
+          "id": 2,
+          "criterion": "Did the model correctly count 3 circles in the image 2.png?"
+        }
+      ]
+    },
+    {
+      "key": "average_circles",
+      "name": "Computed average number of circles correctly",
+      "weight": 1.0,
+      "total": 1,
+      "rubrics": [
+        {
+          "id": 1,
+          "criterion": "Did the model correctly compute the average number of circles per image as 2.00?"
+        }
+      ]
+    }
+  ]
+}

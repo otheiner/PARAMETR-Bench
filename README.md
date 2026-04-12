@@ -101,4 +101,5 @@ Open pull request and you are done! Any scientific process with a simulatable ge
 
 ## Citation
 
+If you find any idea presented in this repo interesting, you are welcome to use it freely in your work, but I will be happy if you cite this repo.
 

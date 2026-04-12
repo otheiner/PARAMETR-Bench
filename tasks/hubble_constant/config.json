@@ -5,17 +5,26 @@
         "easy": {
             "N_GALAXIES": 10,
             "CEPHEID_GENERATE_PROBABILITY": 1,
-            "GALAXY_GENERATE_PROBABILITY": 1
+            "GALAXY_GENERATE_PROBABILITY": 1,
+            "Z_TOLERANCE_BAND" : 0.0012,
+            "H_TOLERANCE_RELATIVE" : 0.1,
+            "H_STDEV_TOLERANCE_RELATIVE" : 1
         },
         "medium": {
             "N_GALAXIES": 300,
             "CEPHEID_GENERATE_PROBABILITY": 0.5,
-            "GALAXY_GENERATE_PROBABILITY": 0.1
+            "GALAXY_GENERATE_PROBABILITY": 0.1,
+            "Z_TOLERANCE_BAND" : 0.0005,
+            "H_TOLERANCE_RELATIVE" : 0.05,
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.5
         },
         "hard": {
             "N_GALAXIES": 4000,
             "CEPHEID_GENERATE_PROBABILITY": 0.25,
-            "GALAXY_GENERATE_PROBABILITY": 0.03
+            "GALAXY_GENERATE_PROBABILITY": 0.03,
+            "Z_TOLERANCE_BAND" : 0.0004,
+            "H_TOLERANCE_RELATIVE" : 0.02,
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.2
         }
     },
 

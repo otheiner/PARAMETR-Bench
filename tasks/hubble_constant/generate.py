@@ -141,6 +141,11 @@ class HubbleConstant(Task):
         LAMBDA_MAX = self.get_params()['LAMBDA_MAX']  # nm
         LAB_SPECTRUM = self.get_params()['LAB_SPECTRUM']
 
+        # Redshift estimation tolerance
+        Z_TOLERANCE_BAND = self.get_params()["Z_TOLERANCE_BAND"]
+        H_TOLERANCE_RELATIVE = self.get_params()["H_TOLERANCE_RELATIVE"]
+        H_STDEV_TOLERANCE_RELATIVE = self.get_params()["H_STDEV_TOLERANCE_RELATIVE"]
+
         spectra_folder = self.input_dir / 'observed_spectra'
         os.makedirs(spectra_folder)
 
@@ -154,13 +159,26 @@ class HubbleConstant(Task):
                             'cepheid_distance [pc]' : pd.Series(dtype='float'),
                             'mean_mag_cepheid': pd.Series(dtype='float'),
                             'period [days]': pd.Series(dtype='float'),})
-
-        result = pd.DataFrame({'hubble_constant' : pd.Series(dtype='float'),
-                              'stdev' : pd.Series(dtype='float')})
         
-        # Add dataframes to the ground_truth dictionary
-        self.ground_truth['generated_data'] = generated_data
-        self.ground_truth['result'] = result
+        analyzed_galaxies = pd.DataFrame({ 'index': pd.Series(dtype='int'),
+                            'galaxy_ID': pd.Series(dtype='str'),
+                            'z' : pd.Series(dtype='float'),
+                            'z_min' : pd.Series(dtype='float'),
+                            'z_max' : pd.Series(dtype='float'),
+                            'spectrum' : pd.Series(dtype='object'),
+                            'true_distance [pc]' : pd.Series(dtype='float'),
+                            'cepheid_ID': pd.Series(dtype='str'),
+                            'cepheid_distance [pc]' : pd.Series(dtype='float'),
+                            'mean_mag_cepheid': pd.Series(dtype='float'),
+                            'period [days]': pd.Series(dtype='float'),})
+
+        results = pd.DataFrame({'hubble_constant' : pd.Series(dtype='float'),
+                                'hubble_constant_min' : pd.Series(dtype='float'),
+                                'hubble_constant_max' : pd.Series(dtype='float'),
+                                'stdev' : pd.Series(dtype='float'),
+                                'stdev_min' : pd.Series(dtype='float'),
+                                'stdev_max' : pd.Series(dtype='float'),
+                                'no_of_galaxies' : pd.Series(dtype='int')})
 
         # Generate laboratory spectrum
         self.plot_spectrum(input_spectrum = LAB_SPECTRUM, 
@@ -228,11 +246,14 @@ class HubbleConstant(Task):
                                 self.input_dir / 'cepheides_mesurements.csv', index=False)
         
         # Print extracted redshifts to .csv file
-        df_solution = generated_data.loc[generated_data['z'].notna() & \
+        analyzed_galaxies = generated_data.loc[generated_data['z'].notna() & \
                                             generated_data['cepheid_ID'].notna()].copy()
-        df_solution.sort_values(by='galaxy_ID', ascending=True, inplace=True)
-        df_solution[['galaxy_ID', 'z']].reset_index(drop=True).to_csv(\
-                    self.ground_truth_dir / 'redshifts.csv', index = False)
+        analyzed_galaxies['z'] = analyzed_galaxies['z'].round(5)
+        analyzed_galaxies['z_min'] = round(analyzed_galaxies['z'] - Z_TOLERANCE_BAND, 5)
+        analyzed_galaxies['z_max'] = round(analyzed_galaxies['z'] + Z_TOLERANCE_BAND, 5)
+        analyzed_galaxies.sort_values(by='galaxy_ID', ascending=True, inplace=True)
+        analyzed_galaxies[['galaxy_ID', 'z']].reset_index(drop=True).to_csv(\
+                                        self.ground_truth_dir / 'redshifts.csv', index = False)
         
         # Fit Hubble's law
         df_est = generated_data.copy()
@@ -241,7 +262,19 @@ class HubbleConstant(Task):
         df_est['period [days]'] = df_est['period [days]'].round(4)
         H0, H0_err = self.fit_hubble(df_est)
 
-        # Save H0 and its standard deviation to ground truth dataframe
-        result['hubble_constant'] = H0
-        result['stdev'] = H0_err
+        # Save results to ground truth dataframe
+        # Create results as a ONE-ROW DataFrame
+        results = pd.DataFrame({
+            'hubble_constant':      [round(H0, 1)],
+            'hubble_constant_min':  [round(H0 * (1 - H_TOLERANCE_RELATIVE), 1)],
+            'hubble_constant_max':  [round(H0 * (1 + H_TOLERANCE_RELATIVE), 1)],
+            'stdev':                [round(H0_err, 1)],
+            'stdev_min':            [round(H0_err * (1 - H_STDEV_TOLERANCE_RELATIVE), 1)],
+            'stdev_max':            [round(H0_err * (1 + H_STDEV_TOLERANCE_RELATIVE), 1)],
+            'no_of_galaxies':       [len(analyzed_galaxies)]
+        })
 
+        # Add dataframes to the ground_truth dictionary
+        self.ground_truth['generated_data'] = generated_data
+        self.ground_truth['analyzed_galaxies'] = analyzed_galaxies
+        self.ground_truth['results'] = results

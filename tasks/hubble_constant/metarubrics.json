@@ -1,25 +1,32 @@
 {
     "metarubrics": [
         {
-            "key": "object_values",
-            "source": "dataframe name in ground_truth.json used to extract data",
-            "name": "Name of the metarubric item 1",
-            "description": "Did the model correctly identify {object_id} with value {value:.5f}?",
+            "key": "no_of_galaxies",
+            "source": "results",
+            "name": "Correct number of galaxies",
+            "description": "Did model estimate redshifts of exactly {no_of_galaxies} galaxies?",
             "weight": 1.0
         },
         {
-            "key": "object_gains",
-            "source": "dataframe name in ground_truth.json used to extract data",
-            "name": "Name of the metarubric item 2",
-            "description": "Did the model correctly identify a net gain {value:.5f} for {object_id}?",
+            "key": "z_estimation",
+            "source": "analyzed_galaxies",
+            "name": "Redshift estimation",
+            "description": "Did the model compute that {galaxy_ID} has redshift {z}, or value strictly inside interval [{z_min} , {z_max}]?",
+            "weight": 5.0
+        },
+        {
+            "key": "h_estimation",
+            "source": "results",
+            "name": "Hubble constant estimation",
+            "description": "Did the model compute that Hubble constant as {hubble_constant} km/s/Mpc, or value strictly inside interval [{hubble_constant_min}, {hubble_constant_max}] km/s/Mpc?",
             "weight": 2.0
         },
         {
-            "key": "final_parameter",
-            "source": "dataframe name in ground_truth.json used to extract data",
-            "name": "Name of the metarubric item 3",
-            "description": "Did the model correctly estimate the final parameter {value:.5f}?",
-            "weight": 1.5
+            "key": "h_stdev_estimation",
+            "source": "results",
+            "name": "Uncertainty on Hubble constant",
+            "description": "Did the model compute that the statistical uncertainty on estimation of Hubble constant as {stdev} km/s/Mpc, or value strictly inside interval [{stdev_min}, {stdev_max}] km/s/Mpc?",
+            "weight": 2.0
         }
     ]
 }

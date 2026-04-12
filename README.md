@@ -7,9 +7,7 @@
 
 # Physics analysis benchmark 📊
 
-A proceduraly generative framework for evaluating LLMs on real scientific analysis workflows — 
-with perfectly synchronized rubrics and statistically robust multi-seed evaluation.
-
+A proceduraly generative framework for multimodal LLMs evaluation on real scientific analysis workflows — with perfectly synchronized rubrics and statistically robust multi-seed evaluation.
 
 ## What is this?
 
@@ -21,12 +19,6 @@ Because tasks are generated from a fixed distribution controlled by difficulty p
 
 The repository includes several tasks inspired by landmark discoveries in particle physics and cosmology, such as invariant mass reconstruction and Cepheid variable calibration.
 
-
-## Motivation 
-
-I am a particle physicist who built this as a passion project to test if models can actually do science. I welcome suggestions and pull requests from other scientists or AI researchers to optimize the prompt engineering and LLM parameters.
-
-
 ## The core idea
 
 Traditional benchmarks rely on fixed test sets that leak into training data, becoming contaminated or saturated. Common solutions are hiding test sets or constantly adding new questions. These approaches either sacrifice benchmrk transparency or require unsustainable effort.
@@ -36,6 +28,10 @@ Procedural generation solves leakage by creating fresh instances every run. But 
 Our solution is to use the same generating process that creates the task data to also instantiate the rubrics. We call these templates metarubrics. Every rubric criterion is mathematically guaranteed to match the generated instance  by construction, not by validation. Templating allows us also automaticaly genere variable number of atomic rubric criteria for repeated data extraction, which is common in scientific data analyses.
 
 Since rubric criteria contain specific numerical values drawn from the simulation, they cannot be gamed by memorising fixed evaluation criteria. A model must solve each instance on its own merits.
+
+## Motivation 
+
+I am a particle physicist who recently got into LLM evaluation and I built this as a passion project to test if models can actually do science. I designed the architecture to specifically address major issues in the field, such as benchmark contamination, rubric drift, and the stochastic nature of LLM responses. I welcome any suggestions, feedback, and pull requests from other scientists or AI researchers.
 
 
 # Quick start

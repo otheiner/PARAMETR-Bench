@@ -1,16 +1,18 @@
 import json
 import re
-import subprocess
 import litellm
 from datetime import datetime
 from pathlib import Path
 import docker
 import tarfile
 import io
+import shutil
+import tempfile
 
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from src.task import Task, TaskResults, MetarubricResult
 from src.utils import get_git_hash
-from src.tools import TOOLS
+from src.tools import TOOLS, load_agentic_prompt
 
 class Evaluator:
 
@@ -19,13 +21,13 @@ class Evaluator:
     # ─────────────────────────────────────────
     def run(self, task: Task, model: str, judge: str,
             agentic: bool = False,
-            max_turns_agent: int  = 10) -> TaskResults:
+            max_turns: int  = 10) -> TaskResults:
         """Run full evaluation pipeline for one task/model/seed."""
 
         # Step 1 — send task to model
         model_output = self._send_to_model(task, model)
         if agentic:
-            model_output = self._send_to_model_agentic(task, model, max_turns_agent)
+            model_output = self._send_to_model_agentic(task, model, max_turns)
         else:
             model_output = self._send_to_model(task, model)
 
@@ -61,7 +63,8 @@ class Evaluator:
             response = litellm.completion(
                 model    = model,
                 messages = messages,
-                temperature = 0.0
+                temperature = 0.0,
+                timeout     = 120 #litellm waits up to 120 s for model response
             )
             model_output = response.choices[0].message.content
     
@@ -218,6 +221,18 @@ class Evaluator:
     # ─────────────────────────────────────────
     def _execute_python(self, code: str, task: Task) -> str:
         """
+        This method calls _run_container and checks the execution time.
+        If the runtime exceeds 30 seconds, it times out.
+        """
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self._run_container, code, task)
+            try:
+                return future.result(timeout=30)
+            except TimeoutError:
+                return "Execution timed out after 30 seconds"
+        
+    def _run_container(self, code: str, task: Task) -> str:
+        """
         Execute model-generated Python code in an isolated Docker container.
         Input files available at /home/agent/workspace/.
         No network, memory capped, non-root user.
@@ -267,37 +282,113 @@ class Evaluator:
             except Exception:
                 pass
 
+    def _execute_python(self, code: str, task: Task) -> str:
+        client = docker.from_env()
+
+        # Create temp directory with input files + script
+        tmpdir = Path(tempfile.mkdtemp())
+
+        try:
+            # Copy input files
+            for filepath in task.input_dir.iterdir():
+                if filepath.is_file():
+                    shutil.copy(filepath, tmpdir / filepath.name)
+
+            # Write script
+            (tmpdir / 'script.py').write_text(code)
+
+            # Mount as read-only volume
+            container = client.containers.run(
+                image         = 'benchmark-sandbox',
+                command       = 'python /home/agent/workspace/script.py',
+                working_dir   = '/home/agent/workspace',
+                user          = 'agent',
+                network_mode  = 'none',
+                mem_limit     = '512m',
+                memswap_limit = '512m',
+                cpu_quota     = 50000,
+                volumes       = {
+                    str(tmpdir): {
+                        'bind': '/home/agent/workspace',
+                        'mode': 'ro'        # read-only mount
+                    }
+                },
+                tmpfs         = {'/tmp': ''},
+                detach        = False,
+                stdout        = True,
+                stderr        = True,
+                remove        = True,
+            )
+
+            return container.decode() if container else "(no output)"
+
+        except docker.errors.ContainerError as e:
+            return e.stderr.decode() if e.stderr else str(e)
+
+        except Exception as e:
+            return f"Execution error: {e}"
+
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
     # ─────────────────────────────────────────
     # Public interface
     # ─────────────────────────────────────────
     def _send_to_model_agentic(self, task: Task, model: str, 
-                               max_turns_agent: int) -> str:
+                               max_turns: int) -> str:
         """
         Agentic evaluation — model can write and execute Python scripts.
-        Loops until model returns final answer without tool calls.
-        Max 10 turns.
+        Loops until model returns final answer without tool calls
+        or until max_turns is reached.
         """
-        messages = [{
-            'role':    'user',
-            'content': [
-                {'type': 'text', 'text': task.get_prompt()},
-                *task.get_input_files(model)
-            ]
-        }]
+        # Build initial message with full content including images
+        initial_content = [
+            {'type': 'text', 'text': task.get_prompt() + load_agentic_prompt(max_turns)},
+            *task.get_input_files(model)
+        ]
 
-        for turn in range(max_turns_agent):
+        messages = [{'role': 'user', 'content': initial_content}]
+
+        for turn in range(max_turns):
             response = litellm.completion(
                 model       = model,
                 messages    = messages,
                 tools       = TOOLS,
-                temperature = 0.0
+                temperature = 0.0,
+                timeout     = 120 #litellm waits up to 120 s for model response
             )
 
             message = response.choices[0].message
 
             # No tool calls — model is done
             if not message.tool_calls:
-                return message.content or ''
+                messages.append(message.model_dump())
+                messages.append({
+                    'role':    'user',
+                    'content': (
+                        'Analysis complete. Now state your final results '
+                        'explicitly following the output format specified '
+                        'in the task instructions. Do not use any tools — '
+                        'only summarise your findings in plain text.'
+                    )
+                })
+
+                summary = litellm.completion(
+                    model       = model,
+                    messages    = messages,
+                    temperature = 0.0,
+                    timeout     = 120
+                    # No tools passed — forces text-only response
+                )
+
+                final_answer = summary.choices[0].message.content or ''
+
+                print(f"\n{'-' * 50}")
+                print("FINAL ANSWER:")
+                print('-' * 50)
+                print(final_answer)
+
+                return final_answer
 
             # Append assistant turn to history
             messages.append(message.model_dump())

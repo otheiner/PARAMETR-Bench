@@ -15,6 +15,13 @@ def _load_sandbox_libraries() -> str:
     
     return ', '.join(libraries)
 
+# Addition to the task prompt when using agentic evaluation
+def load_agentic_prompt(max_turns: int) -> str:
+    """Load agentic prompt addition and fill in available libraries."""
+    template = (Path(__file__).parent / 'agentic_prompt.md').read_text()
+    return template.format(libraries=_load_sandbox_libraries(),
+                           max_turns = max_turns)
+
 TOOLS = [
     {
         "type": "function",

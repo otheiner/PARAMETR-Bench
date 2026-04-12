@@ -5,6 +5,8 @@ statsmodels
 matplotlib
 litellm
 python-dotenv
+shutil
+tempfile
 
 
 # Not mandatory to use, but good for local testing. ollama/llama3.2 set as default.

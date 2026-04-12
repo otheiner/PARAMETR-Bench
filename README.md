@@ -97,7 +97,7 @@ Validate without API calls:
 python run.py --task my_task --validate-only
 ```
 
-Then open a pull request. Any scientific process with a simulatable generating distribution can become a task — physics, mathematics, chemistry, biology, climate science, and beyond.
+Then open a pull request. Any scientific process with a simulatable generating distribution can become a task — physics, mathematics, chemistry, biology, climate science, and beyond. Tasks in the repo starting with underscore are skipped for benchmarking (unless explicitly requested in `run.py` by `--tasks <_task_name>`) but they are minimal working examples that can be used as a reference.
 
 ## Citation
 

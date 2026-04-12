@@ -25,7 +25,7 @@
             "key": "h_stdev_estimation",
             "source": "results",
             "name": "Uncertainty on Hubble constant",
-            "description": "Did the model compute that the statistical uncertainty on estimation of Hubble constant as {stdev} km/s/Mpc, or value strictly inside interval [{stdev_min}, {stdev_max}] km/s/Mpc?",
+            "description": "Did the model compute statistical uncertainty on estimation of Hubble constant as {stdev} km/s/Mpc, or value strictly inside interval [{stdev_min}, {stdev_max}] km/s/Mpc?",
             "weight": 10.0
         }
     ]

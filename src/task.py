@@ -111,7 +111,7 @@ class MetarubricResult:
         lo, hi = self.confidence_interval
 
         # Make all names the same width
-        aligned_name = (self.metarubric_name + ":").ljust(80)
+        aligned_name = (self.metarubric_name + ":").ljust(50)
         return (
             f"{aligned_name}"
             f"{self.passed}/{self.total} "

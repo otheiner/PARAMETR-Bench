@@ -12,14 +12,16 @@ State the result in km/s/Mpc rounded to one decimal place ± absolute statistica
 ________________________________________
 ## Output format
 
-Structure your response exactly as follows:
+Enclose your final results into formatting tags <final_result> </final_result> and structure your response exactly as follows:
 
+<final_result> 
 REDSHIFTS OF GALAXIES USED IN THE ANALYSIS:
 <GID...>    <redshift value>
 <GID...>    <redshift value>
 
 HUBBLE CONSTANT ± STDEV:
 <H_0> ± <STDEV> km/s/Mpc
+</final_result>
 
 ________________________________________
 ## Files provided

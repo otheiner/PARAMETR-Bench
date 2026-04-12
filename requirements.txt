@@ -6,6 +6,11 @@ matplotlib
 litellm
 python-dotenv
 
+
 # Not mandatory to use, but good for local testing. ollama/llama3.2 set as default.
 # Python client — server must be installed separately: https://ollama.com. 
 ollama
+
+# Not mandatory, but it is necessary for agentic evaluation.
+docker
+tarfile

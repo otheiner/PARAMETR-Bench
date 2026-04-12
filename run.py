@@ -16,21 +16,32 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Evaluate LLMs on physics benchmark tasks.'
     )
-    parser.add_argument('--task',          type=str,
+    parser.add_argument('--task',          type = str,
                         help='Specific task folder names. Omit to run all.')
-    parser.add_argument('--models',        type=str, nargs='+',
-                        default=['ollama/qwen2.5:3b'])
-    parser.add_argument('--judge',         type=str,
-                        default='ollama/qwen2.5:3b')
-    parser.add_argument('--difficulty',    type=str,
+    parser.add_argument('--models',        type = str, nargs = '+',
+                        default=['ollama/llama3.2'],
+                        help  = 'Set of models for evaluation.')
+    parser.add_argument('--judge',         type = str,
+                        default='ollama/llama3.2',
+                        help  = 'Model used as judge.')
+    parser.add_argument('--difficulty',    type = str,
                         default='medium',
                         choices=['easy', 'medium', 'hard'])
-    parser.add_argument('--seeds',         type=int, nargs='+',
-                        default=[0])
-    parser.add_argument('--validate-only', action='store_true',
+    parser.add_argument('--seeds',         type = int, nargs = '+',
+                        default=[0],
+                        help  = 'Set of seeds used in evaluation.')
+    parser.add_argument('--validate-only', action = 'store_true',
                         help='Setup only — no model calls.')
-    parser.add_argument('--list',          action='store_true',
+    parser.add_argument('--list',          action = 'store_true',
                         help='List discovered tasks and exit.')
+    parser.add_argument('--agentic',       action = 'store_true',
+                        default = False,
+                        help    = 'Enable agentic evaluation with sandboxed Python execution.'
+                                  'Requires Docker and benchmark-sandbox image.')
+    parser.add_argument('--max-turns',     type = int,
+                        default = 10,
+                        help    = 'Maximum agentic turns per evaluation (default: 10).')
+    
     return parser.parse_args()
 
 
@@ -154,7 +165,9 @@ def main():
                 result = evaluator.run(
                     task  = task,
                     model = tested_model,
-                    judge = args.judge
+                    judge = args.judge,
+                    agentic = args.agentic,
+                    max_turns = args.max_turns 
                 )
 
                 #print(result)

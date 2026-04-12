@@ -65,6 +65,16 @@ Or validate task generation without API calls and inspect generated data:
 python run.py --validate-only
 ```
 
+# Agentic evaluation
+
+Build the sandbox image once:
+
+```bash
+docker build -t benchmark-sandbox sandbox/
+```
+
+The image is built locally from `sandbox/Dockerfile` — no external dependencies or DockerHub account required.
+
 # Results
 
 

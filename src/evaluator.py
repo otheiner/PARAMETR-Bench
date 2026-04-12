@@ -4,21 +4,30 @@ import subprocess
 import litellm
 from datetime import datetime
 from pathlib import Path
+import docker
+import tarfile
+import io
 
 from src.task import Task, TaskResults, MetarubricResult
 from src.utils import get_git_hash
+from src.tools import TOOLS
 
 class Evaluator:
 
     # ─────────────────────────────────────────
     # Public interface
     # ─────────────────────────────────────────
-
-    def run(self, task: Task, model: str, judge: str) -> TaskResults:
+    def run(self, task: Task, model: str, judge: str,
+            agentic: bool = False,
+            max_turns_agent: int  = 10) -> TaskResults:
         """Run full evaluation pipeline for one task/model/seed."""
 
         # Step 1 — send task to model
         model_output = self._send_to_model(task, model)
+        if agentic:
+            model_output = self._send_to_model_agentic(task, model, max_turns_agent)
+        else:
+            model_output = self._send_to_model(task, model)
 
         # Step 2 — judge output against pre-generated rubrics
         mr_results = self._judge(task, model_output, judge)
@@ -38,7 +47,6 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Send to model
     # ─────────────────────────────────────────
-
     def _send_to_model(self, task: Task, model: str) -> str:
         """Build message from task prompt + input files, call model, return response."""
         messages = [{
@@ -75,7 +83,6 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Judge
     # ─────────────────────────────────────────
-
     def _judge(self, task: Task,
                model_output: str,
                judge: str) -> list[MetarubricResult]:
@@ -98,6 +105,9 @@ class Evaluator:
 
         return results
 
+    # ─────────────────────────────────────────
+    # Judge metarubrics either as batch or single
+    # ─────────────────────────────────────────
     def _judge_metarubric(self, rubrics: list[str],
                            model_output: str,
                            judge: str) -> int:    
@@ -116,6 +126,9 @@ class Evaluator:
             # API models — batch all rubrics in one call
             return self._judge_batch(rubrics, model_output, judge)
 
+    # ─────────────────────────────────────────
+    # Judge single rubric item
+    # ─────────────────────────────────────────
     def _judge_single(self, rubric: str,
                        model_output: str,
                        judge: str) -> bool:
@@ -141,6 +154,9 @@ class Evaluator:
             print(f"⚠  Judge call failed: {e} — counting as not passed")
             return False
         
+    # ─────────────────────────────────────────
+    # Batch rubrics in one metarubric
+    # ─────────────────────────────────────────
     def _judge_batch(self, rubrics: list[str],
                   model_output: str,
                   judge: str) -> int:
@@ -196,3 +212,113 @@ class Evaluator:
         except Exception as e:
             print(f"⚠  Judge call failed: {e}")
             return 0
+        
+    # ─────────────────────────────────────────
+    # Allow python execution for agentic evaluation
+    # ─────────────────────────────────────────
+    def _execute_python(self, code: str, task: Task) -> str:
+        """
+        Execute model-generated Python code in an isolated Docker container.
+        Input files available at /home/agent/workspace/.
+        No network, memory capped, non-root user.
+        """
+        client = docker.from_env()
+
+        # Build tar archive of input files + script in memory
+        tar_buffer = io.BytesIO()
+        with tarfile.open(fileobj=tar_buffer, mode='w') as tar:
+            for filepath in task.input_dir.iterdir():
+                if filepath.is_file():
+                    tar.add(filepath, arcname=filepath.name)
+
+            script_bytes = code.encode('utf-8')
+            info         = tarfile.TarInfo(name='script.py')
+            info.size    = len(script_bytes)
+            tar.addfile(info, io.BytesIO(script_bytes))
+
+        tar_buffer.seek(0)
+
+        try:
+            container = client.containers.create(
+                image         = 'benchmark-sandbox',
+                command       = 'python /home/agent/workspace/script.py',
+                working_dir   = '/home/agent/workspace',
+                user          = 'agent',
+                network_mode  = 'none',
+                mem_limit     = '512m',
+                memswap_limit = '512m',
+                cpu_quota     = 50000,
+                read_only     = True,
+                tmpfs         = {'/tmp': ''},
+            )
+
+            container.put_archive('/home/agent/workspace', tar_buffer)
+            container.start()
+            logs      = container.logs(stdout=True, stderr=True).decode()
+
+            return logs if logs else "(no output)"
+
+        except Exception as e:
+            return f"Execution error: {e}"
+
+        finally:
+            try:
+                container.remove(force=True)
+            except Exception:
+                pass
+
+    # ─────────────────────────────────────────
+    # Public interface
+    # ─────────────────────────────────────────
+    def _send_to_model_agentic(self, task: Task, model: str, 
+                               max_turns_agent: int) -> str:
+        """
+        Agentic evaluation — model can write and execute Python scripts.
+        Loops until model returns final answer without tool calls.
+        Max 10 turns.
+        """
+        messages = [{
+            'role':    'user',
+            'content': [
+                {'type': 'text', 'text': task.get_prompt()},
+                *task.get_input_files(model)
+            ]
+        }]
+
+        for turn in range(max_turns_agent):
+            response = litellm.completion(
+                model       = model,
+                messages    = messages,
+                tools       = TOOLS,
+                temperature = 0.0
+            )
+
+            message = response.choices[0].message
+
+            # No tool calls — model is done
+            if not message.tool_calls:
+                return message.content or ''
+
+            # Append assistant turn to history
+            messages.append(message.model_dump())
+
+            # Execute each tool call
+            for tool_call in message.tool_calls:
+                code   = json.loads(tool_call.function.arguments)['code']
+                output = self._execute_python(code, task)
+
+                print(f"\n{'-' * 50}")
+                print(f"TOOL CALL (turn {turn + 1}):")
+                print(f"\n{'-' * 50}")
+                print(code)
+                print(f"OUTPUT:")
+                print(output)
+
+                messages.append({
+                    'role':         'tool',
+                    'tool_call_id': tool_call.id,
+                    'name':         'execute_python',
+                    'content':      output
+                })
+
+        return message.content or "Max turns reached."

@@ -7,7 +7,9 @@
 
 # Physics analysis benchmark 📊
 
-A framework for building contamination-free scientific benchmarks for LLM evaluation with deterministically generated rubrics.
+A seeded generative framework for evaluating LLMs on real scientific analysis workflows — 
+with perfectly synchronized rubrics and statistically robust multi-seed evaluation.
+
 
 ## What is this?
 
@@ -15,16 +17,18 @@ XXXX is a framework for evaluating LLMs on realistic scientific analysis workflo
 
 Every run produces fresh multimodal instances (plots, CSVs, data tables) from a controlled generative process. The key innovation is source-grounded metarubrics: rubric templates that are automatically populated directly from the generated ground truth. This guarantees that evaluation criteria are always perfectly aligned with the task data — eliminating rubric drift by construction.
 
-Because tasks are generated from a fixed distribution controlled by difficulty parameters and random seeds, the framework supports statistically rigorous evaluation. Multiple independent seeds at the same difficulty level allow treating each run as an independent trial, enabling proper confidence intervals, per-rubric breakdowns, and robust model comparisons.
+Because tasks are generated from a fixed distribution controlled by difficulty parameters and random seeds, the framework enables statistically rigorous evaluation. Running multiple independent seeds at the same difficulty level turns each evaluation into a set of independent trials, allowing proper confidence intervals, per-rubric breakdowns, and more reliable model comparisons.
+
+The repository includes several tasks inspired by landmark discoveries in particle physics and cosmology, such as invariant mass reconstruction and Cepheid variable calibration.
 
 
 ## The core idea
 
-Traditional benchmarks rely on fixed test sets that leak into training data, becoming contaminated or saturated. Common solutions — hiding test sets or constantly adding new questions — either sacrifice transparency or require unsustainable effort.
+Traditional benchmarks rely on fixed test sets that leak into training data, becoming contaminated or saturated. Common solutions are hiding test sets or constantly adding new questions. These approaches either sacrifice benchmrk transparency or require unsustainable effort.
 
 Procedural generation solves leakage by creating fresh instances every run. But it introduces a new problem: keeping rubrics aligned with dynamically generated data, especially in multi-step scientific tasks.
 
-Our solution: use the same generating process that creates the task data to also instantiate the rubrics. We call these templates metarubrics. Every rubric criterion is mathematically guaranteed to match the generated instance  by construction, not by validation. 
+Our solution is to use the same generating process that creates the task data to also instantiate the rubrics. We call these templates metarubrics. Every rubric criterion is mathematically guaranteed to match the generated instance  by construction, not by validation. Templating allows us also automaticaly genere variable number of atomic rubrics for repeated data extraction, which is common in scientific data analyses.
 
 Because rubric criteria contain specific numerical values drawn from the simulation, they cannot be gamed by memorising fixed evaluation criteria. A model must solve each instance on its own merits.
 
@@ -67,16 +71,17 @@ python run.py --validate-only
 
 Each task is defined by three files:
 
+- `prompt.md` - prompt defining the task writen in natural language
 - `generate.py` — simulation code producing input data and ground truth
 - `metarubrics.json` — rubric templates instantiated from generated data  
 - `config.json` — difficulty parameters
 
 The pipeline:
 
-1) generate_task() - generates fresh input_data/ + ground_truth/
-2) populate_metarubrics() - fills templates from ground truth
-3) generate_rubrics() - creates instances of metarubrics and produces rubrics.json
-4) evaluator.run() - sends to model, LLM-as-judge judges output, saves results
+1) `task.generate_task()` - generates fresh input_data/ + ground_truth/
+2) `task.populate_metarubrics()` - fills metarubrics (rubric templates) from ground truth
+3) `task.generate_rubrics()` - creates instances of metarubrics and produces rubrics.json
+4) `evaluator.run()` - sends to model, uses LLM-as-judge to judge output, saves results
 
 
 ## Contributing tasks

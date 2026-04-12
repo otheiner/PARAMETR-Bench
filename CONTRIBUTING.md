@@ -1,6 +1,6 @@
 ## Contributing a task
 
-This project started as a personal passion project but it would be great if it grew into something bigger. If you feel motivated to contribute a task from your domain (or you have any suggestion), reach out to me [here](https://otheiner.github.io/#contact) and I will be happy to help. Contributing process is simple:
+This project started as a personal passion project but it would be great if it grows into something bigger. If you feel motivated to contribute a task from your domain (or you have any suggestion), reach out to me [here](https://otheiner.github.io/#contact) and I will be happy to help. Contributing process is simple:
 
 1) **Fork the repository and scaffold a new task:**
 

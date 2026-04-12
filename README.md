@@ -22,6 +22,11 @@ Because tasks are generated from a fixed distribution controlled by difficulty p
 The repository includes several tasks inspired by landmark discoveries in particle physics and cosmology, such as invariant mass reconstruction and Cepheid variable calibration.
 
 
+## Motivation 
+
+I am a particle physicist who built this as a passion project to test if models can actually do science. I welcome suggestions and pull requests from other scientists or AI researchers to optimize the prompt engineering and LLM parameters.
+
+
 ## The core idea
 
 Traditional benchmarks rely on fixed test sets that leak into training data, becoming contaminated or saturated. Common solutions are hiding test sets or constantly adding new questions. These approaches either sacrifice benchmrk transparency or require unsustainable effort.
@@ -33,7 +38,7 @@ Our solution is to use the same generating process that creates the task data to
 Since rubric criteria contain specific numerical values drawn from the simulation, they cannot be gamed by memorising fixed evaluation criteria. A model must solve each instance on its own merits.
 
 
-## Quick start
+# Quick start
 
 Clone repo and install dependencies:
 
@@ -64,10 +69,10 @@ Or validate task generation without API calls and inspect generated data:
 python run.py --validate-only
 ```
 
-## Results
+# Results
 
 
-## How it works
+# How it works
 
 Each task is defined by four files:
 
@@ -84,12 +89,12 @@ The pipeline:
 4) `evaluator.run()` - sends to model, uses LLM-as-judge to judge output, saves results
 
 
-## Contributing tasks
+# Contributing tasks
 
 If you are considering contributing task from your domain, refer to `CONTRIBUTING.md`.
 
 
-## Citation
+# Citation
 
 If you find this work useful or interesting, please consider citing it:
 

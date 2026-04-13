@@ -1,4 +1,4 @@
-# Count circles
+# Count circles - minimal working example task
 
 This task is simple - it asks the model to count number of dots in each image and compute average number of dots in the image. This is very simple problem for human which models will struggle with, if the number of dots is slightly higher (`--difficulty hard`). However, if we allow agentic evaluation, moderately capable models will easily write python script that can analyze the image and they will score 100% on the task.
 

@@ -1,4 +1,4 @@
-# Compute average
+# Compute average - minimal working example task
 
 This task is simple reading file and computing average of numbers. Moderately capable LLM can do this task simply in non-agentic regime, however, smaller models might halucinate average for medium and hard difficulty.
 

@@ -21,7 +21,7 @@ Because tasks are generated from a fixed distribution controlled by difficulty p
 
 The repository includes several tasks inspired by landmark discoveries in particle physics and cosmology, such as invariant mass reconstruction and Cepheid variable calibration.
 
-Expand the section bellow and see the concrete example how metarubrics and rubrics work.
+Expand the section below and see the concrete example how metarubrics and rubrics work.
 
 <details>
 <summary><strong>✅ Metarubrics vs. Rubrics (click to expand)</strong></summary>
@@ -111,7 +111,7 @@ Our framework utilizes user-specified seeds to ensure that task generation is ra
 
 ## Motivation 
 
-I am a particle physicist who recently got into LLM evaluation and I built this as a passion project to test if models can actually do science. I tried to designed the architecture to specifically address major issues in the field, such as benchmark contamination, rubric drift, and the stochastic nature of LLM responses. If you have any questions, comments, suggestionson, or you would be interested in contributing, don't hesitate to reach out to me [here](https://otheiner.github.io/#contact).
+I am a particle physicist who recently got into LLM evaluation and I built this as a passion project to test if models can actually do science. I tried to design the architecture to specifically address major issues in the field, such as benchmark contamination, rubric drift, and the stochastic nature of LLM responses. If you have any questions, comments, suggestions, or you would be interested in contributing, don't hesitate to reach out to me [here](https://otheiner.github.io/#contact).
 
 # Quick start
 

@@ -1,6 +1,5 @@
 import json
 import re
-import litellm
 from datetime import datetime
 from pathlib import Path
 import docker
@@ -13,6 +12,9 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from src.task import Task, TaskResults, MetarubricResult
 from src.utils import get_git_hash
 from src.tools import TOOLS, load_agentic_prompt
+
+import litellm
+litellm.request_timeout = 300
 
 class Evaluator:
 
@@ -64,7 +66,6 @@ class Evaluator:
                 model    = model,
                 messages = messages,
                 temperature = 0.0,
-                timeout     = 120 #litellm waits up to 120 s for model response
             )
             model_output = response.choices[0].message.content
     
@@ -282,6 +283,9 @@ class Evaluator:
             except Exception:
                 pass
 
+    # ─────────────────────────────────────────
+    # Execute python in sandbox
+    # ─────────────────────────────────────────
     def _execute_python(self, code: str, task: Task) -> str:
         client = docker.from_env()
 
@@ -292,7 +296,11 @@ class Evaluator:
             # Copy input files
             for filepath in task.input_dir.iterdir():
                 if filepath.is_file():
-                    shutil.copy(filepath, tmpdir / filepath.name)
+                    shutil.copytree(
+                        task.input_dir,
+                        tmpdir,
+                        dirs_exist_ok = True
+                    )
 
             # Write script
             (tmpdir / 'script.py').write_text(code)
@@ -354,8 +362,7 @@ class Evaluator:
                 model       = model,
                 messages    = messages,
                 tools       = TOOLS,
-                temperature = 0.0,
-                timeout     = 120 #litellm waits up to 120 s for model response
+                temperature = 0.0
             )
 
             message = response.choices[0].message
@@ -377,7 +384,6 @@ class Evaluator:
                     model       = model,
                     messages    = messages,
                     temperature = 0.0,
-                    timeout     = 120
                     # No tools passed — forces text-only response
                 )
 
@@ -413,3 +419,129 @@ class Evaluator:
                 })
 
         return message.content or "Max turns reached."
+    
+    def _send_to_model_agentic(self, task: Task, model: str,
+                            max_turns: int) -> str:
+        """
+        Agentic evaluation — model can write and execute Python scripts.
+        Images are sent once in turn 1 for visual context.
+        Subsequent turns reference files via execute_python only.
+        Loops until model returns final answer without tool calls
+        or until max_turns is reached.
+        """
+        messages = [{
+            'role':    'user',
+            'content': [
+                {'type': 'text', 'text': task.get_prompt() + load_agentic_prompt(max_turns)},
+                *task.get_input_files(model)
+            ]
+        }]
+
+        for turn in range(max_turns):
+            response = litellm.completion(
+                model       = model,
+                messages    = messages,
+                tools       = TOOLS,
+                temperature = 0.0
+            )
+
+            message = response.choices[0].message
+
+            # No tool calls — model finished analysis, ask for summary
+            if not message.tool_calls:
+                messages.append(message.model_dump())
+                messages.append({
+                    'role':    'user',
+                    'content': (
+                        'Analysis complete. Now state your final results '
+                        'explicitly following the output format specified '
+                        'in the task instructions. Do not use any tools — '
+                        'only summarise your findings in plain text.'
+                    )
+                })
+
+                summary = litellm.completion(
+                    model       = model,
+                    messages    = messages,
+                    temperature = 0.0
+                    # No tools — forces text-only response
+                )
+
+                final_answer = summary.choices[0].message.content or ''
+
+                print(f"\n{'-' * 50}")
+                print("FINAL ANSWER:")
+                print('-' * 50)
+                print(final_answer)
+
+                return final_answer
+
+            # Append assistant turn to history
+            messages.append(message.model_dump())
+
+            # Execute each tool call
+            for tool_call in message.tool_calls:
+                code   = json.loads(tool_call.function.arguments)['code']
+                output = self._execute_python(code, task)
+
+                print(f"\n{'-' * 50}")
+                print(f"TOOL CALL (turn {turn + 1}):")
+                print(f"\n{'-' * 50}")
+                print(code)
+                print(f"OUTPUT:")
+                print(output)
+
+                # Truncate long outputs to avoid context explosion
+                if len(output) > 5000:
+                    output = output[:5000] + "\n...(truncated)"
+
+                messages.append({
+                    'role':         'tool',
+                    'tool_call_id': tool_call.id,
+                    'name':         'execute_python',
+                    'content':      output
+                })
+
+            # After turn 0 — strip base64 images, add file list
+            if turn == 0:
+                file_list = [
+                    str(f.relative_to(task.input_dir))
+                    for f in sorted(task.input_dir.rglob('*'))
+                    if f.is_file() and f.name != '.gitignore'
+                ]
+
+                messages[0] = {
+                    'role':    'user',
+                    'content': [
+                        {'type': 'text', 'text': task.get_prompt() + load_agentic_prompt(max_turns)},
+                        {'type': 'text', 'text':
+                        'Input files available in your working directory:\n' +
+                        '\n'.join(f'  - {f}' for f in file_list) +
+                        '\nAccess them via execute_python.'}
+                    ]
+                }
+
+        # Max turns reached — ask for summary of what was found
+        messages.append({
+            'role':    'user',
+            'content': (
+                'Maximum tool calls reached. State your final results '
+                'explicitly following the output format specified in the '
+                'task instructions based on what you have found so far.'
+            )
+        })
+
+        summary = litellm.completion(
+            model       = model,
+            messages    = messages,
+            temperature = 0.0
+        )
+
+        final_answer = summary.choices[0].message.content or "No summary produced."
+
+        print(f"\n{'-' * 50}")
+        print("FINAL ANSWER (max turns reached):")
+        print('-' * 50)
+        print(final_answer)
+
+        return final_answer

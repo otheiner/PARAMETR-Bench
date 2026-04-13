@@ -50,6 +50,14 @@ The framework uses [litellm](https://github.com/BerriAI/litellm), supporting bot
 cp .env.example .env   # fill in your API keys to .env
 ```
 
+Validate task generation without API calls and inspect generated data locally:
+
+```bash
+python run.py --validate-only
+```
+
+## Non-agentic evaluation
+
 Run the benchmark and produce your results (you can plug any models of your choice supported by `litellm`):
 
 ```bash
@@ -59,22 +67,16 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
               --seeds 0 1
 ```
 
-Or validate task generation without API calls and inspect generated data:
-
-```bash
-python run.py --validate-only
-```
-
 ## Agentic evaluation
 
-Build the sandbox docker image and use flag `--agentic`:
+Build the sandbox Docker image and use flag `--agentic`:
 
 ```bash
 docker build -t benchmark-sandbox sandbox/
 python run.py --models gemini/gemini-3.1-flash-lite-preview \
               --judge  gemini/gemini-2.5-flash \
               --difficulty medium \
-              --adentic \
+              --agentic \
               --seeds 0 1
 ```
 
@@ -86,9 +88,9 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
 Each task is defined by four files:
 
 - `prompt.md` - prompt defining the task writen in natural language
-- `generate.py` — simulation code producing input data and ground truth
-- `config.json` — difficulty parameters loaded in `generate.py` (each task currently defines easy, medium, hard levels)
-- `metarubrics.json` — rubric templates instantiated from generated data  
+- `generate.py` - simulation code producing input data and ground truth
+- `config.json` - difficulty parameters loaded in `generate.py` (each task currently defines easy, medium, hard levels)
+- `metarubrics.json` - rubric templates instantiated from generated data  
 
 The framework then automatically follows this pipeline:
 

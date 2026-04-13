@@ -65,15 +65,18 @@ Or validate task generation without API calls and inspect generated data:
 python run.py --validate-only
 ```
 
-# Agentic evaluation
+## Agentic evaluation
 
-Build the sandbox image once:
+Build the sandbox docker image and use flag `--agentic`:
 
 ```bash
 docker build -t benchmark-sandbox sandbox/
+python run.py --models gemini/gemini-3.1-flash-lite-preview \
+              --judge  gemini/gemini-2.5-flash \
+              --difficulty medium \
+              --adentic \
+              --seeds 0 1
 ```
-
-The image is built locally from `sandbox/Dockerfile` — no external dependencies or DockerHub account required.
 
 # Results
 

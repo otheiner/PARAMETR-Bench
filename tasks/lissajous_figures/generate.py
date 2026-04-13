@@ -100,6 +100,13 @@ class LissajousFigures(Task):
                     "frequency" : pd.Series(dtype='int')
                     })
         
+        complement_qa_data = pd.DataFrame({
+                    "supply_ID" : pd.Series(dtype='str'), 
+                    "machine" : pd.Series(dtype='str'),
+                    "batch" : pd.Series(dtype='str'), 
+                    "frequency" : pd.Series(dtype='int')
+                    })
+        
         faulty_machines = pd.DataFrame({
                         "machine" : pd.Series(dtype='str')
                         })
@@ -205,6 +212,11 @@ class LissajousFigures(Task):
         
         qa_data = filtered_rows[["supply_ID", "machine" ,"batch", "frequency"]]
 
+        complement_filtered_rows = generated_data[(generated_data["measured"] == 1) & 
+                                (generated_data["frequency"] <= 60)]
+        
+        complement_qa_data = complement_filtered_rows[["supply_ID", "machine" ,"batch", "frequency"]]
+
         failure_rate['failure_rate'] = failure_rate['failures'] / failure_rate['total']
 
         # Filter machines with failure rate > 10%
@@ -217,6 +229,7 @@ class LissajousFigures(Task):
             # Add dataframes to the ground_truth dictionary
         self.ground_truth["generated_data"] = generated_data
         self.ground_truth["qa_data"] = qa_data
+        self.ground_truth["complement_qa_data"] = complement_qa_data
         self.ground_truth["faulty_machines"] = faulty_machines
         self.ground_truth["not_faulty_machines"] = not_faulty_machines
             

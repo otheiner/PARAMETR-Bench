@@ -89,6 +89,19 @@ Our solution is to use the same generating process that creates the task data to
 
 Since rubric criteria contain specific numerical values drawn from the simulation, they cannot be gamed by memorising fixed evaluation criteria. A model must solve each instance on its own merits.
 
+<details>
+<summary><strong>⚠️ How to detect "cheaters"? (click to expand)</strong></summary>
+
+## Seeded generation
+
+Our framework utilizes user-specified seeds to ensure that task generation is randomized yet fully reproducible. While the repository itself contains no raw data, the specific set of seeds serves as a precise "recipe" for reconstructing the evaluation dataset. This approach is advantageous for several reasons:
+
+1) **Minimizing Data Contamination:** Since the evaluation data is generated on the fly and never stored statically in the repository, the risk of it being scraped and contaminating future LLM training sets is significantly reduced.
+2) **Leak Detection:** If evaluation data from specific public seeds were to leak into a model's training set, the model might show inflated performance due to memorization. We can detect this by re-running the benchmark with a fresh set of random seeds. A statistically significant performance gap between "public" seeds and "random" seeds provides a clear indication of a potential data leak.
+3) **Resilience to Leaks:** If a specific dataset is compromised, the seeds can simply be rotated. Because our framework relies on statistical evaluation across multiple independent seeds, the resulting performance metrics remain comparable and valid even after the seeds are changed.
+    
+</details>
+
 ## Motivation 
 
 I am a particle physicist who recently got into LLM evaluation and I built this as a passion project to test if models can actually do science. I designed the architecture to specifically address major issues in the field, such as benchmark contamination, rubric drift, and the stochastic nature of LLM responses. If you have any questions, comments, suggestionson, or you would be interested in contributing, don't hesitate to reach out to me [here](https://otheiner.github.io/#contact).

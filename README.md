@@ -29,7 +29,63 @@ Procedural generation solves leakage by creating fresh instances every run. But 
 
 Our solution is to use the same generating process that creates the task data to also instantiate the rubrics. We call these templates metarubrics. Every rubric criterion is mathematically guaranteed to match the generated instance  by construction, not by validation. Templating allows us also automatically generate variable number of atomic rubric criteria for repeated data extraction, which is common in scientific data analyses.
 
-Since rubric criteria contain specific numerical values drawn from the simulation, they cannot be gamed by memorising fixed evaluation criteria. A model must solve each instance on its own merits.
+Since rubric criteria contain specific numerical values drawn from the simulation, they cannot be gamed by memorising fixed evaluation criteria. A model must solve each instance on its own merits. Expand the section bellow and see the concrete example how metarubrics and rubrics work.
+
+<details>
+<summary><strong>🔍 Metarubrics vs. Rubrics (click to expand)</strong></summary>
+
+## Metarubrics and Rubrics
+
+The user only needs to define the metarubric (the template); the framework handles the rest. In this context, metarubrics are analogous to classes in object-oriented programming, while rubrics are specific instances of those classes instantiated with unique parameters for a given task.
+
+### 1. User-Defined Metarubric (The Template)
+The user provides a high-level template with placeholders.
+
+```json
+"metarubrics": [
+    {
+      "key": "z_estimation",
+      "source": "analyzed_galaxies",
+      "name": "Redshift estimation",
+      "description": "Did the model compute that {galaxy_ID} has redshift {z}, or a value strictly inside the interval [{z_min}, {z_max}]?",
+      "weight": 5.0
+    }
+]
+```
+
+### 2. Framework-Generated Rubrics (The Instances)
+The framework populates the template using the ground truth from the procedurally generated dataset.
+
+```json
+"metarubrics": [
+    {
+      "key": "z_estimation",
+      "name": "Redshift estimation",
+      "weight": 5.0,
+      "total": 3,
+      "rubrics": [
+        {
+          "id": 1,
+          "criterion": "Did the model compute that GID075008 has redshift 0.02978, or value strictly inside interval [0.02928 , 0.03028]?"
+        },
+        {
+          "id": 2,
+          "criterion": "Did the model compute that GID104365 has redshift 0.01951, or value strictly inside interval [0.01901 , 0.02001]?"
+        },
+        {
+          "id": 3,
+          "criterion": "Did the model compute that GID173179 has redshift 0.01831, or value strictly inside interval [0.01781 , 0.01881]?"
+        }
+      ]
+    }
+]
+```
+
+### Why this matters
+
+Because tasks are generated procedurally, the number of generated rubrics (instances) can vary between individual runs. This dynamic approach prevents rubric drift - where an agent might memorize static answers - and enables granular, automated grading with zero human intervention.
+
+</details>
 
 ## Motivation 
 

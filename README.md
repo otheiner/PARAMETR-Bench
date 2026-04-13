@@ -128,7 +128,7 @@ Run the benchmark and produce your results (you can plug any models of your choi
 <details>
 <summary><strong>👍 Agentic vs. non-agentic evaluation (click to expand)</strong></summary>
 
-The framework uses [litellm](https://github.com/BerriAI/litellm), supporting both local models via [Ollama](https://ollama.com) and API-based models. If you want to use local models make sure that your `ollama` server is installed and running (see Ollama link). To use API models, add your keys:
+PARAMETR-Bench uses [litellm](https://github.com/BerriAI/litellm), supporting both local models via [Ollama](https://ollama.com) and API-based models. If you want to use local models make sure that your `ollama` server is installed and running (see Ollama link). To use API models, add your keys:
 
 ```bash
 cp .env.example .env   # fill in your API keys to .env

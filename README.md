@@ -7,13 +7,13 @@
 ![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=for-the-badge&logo=Matplotlib&logoColor=black)
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-blueviolet?style=for-the-badge)
 
-# Physics analysis benchmark 📊
+# 📊 PARAMETR-Bench  
 
-*A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.*
+**P**rocedural **A**nd **R**igorous **A**ssassement using **MET**a**R**ubrics: A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.
 
 ## What is this?
 
-XXXX is a framework for evaluating LLMs on realistic scientific analysis workflows using procedurally generated tasks with perfectly synchronized rubrics.
+PARAMETR-Bench is a framework for evaluating LLMs on realistic scientific analysis workflows using procedurally generated tasks with perfectly synchronized rubrics.
 
 Every run produces fresh multimodal instances (plots, CSVs, data tables) from a controlled generative process. The key innovation is source-grounded metarubrics: rubric templates that are automatically populated directly from the generated ground truth. This guarantees that evaluation criteria are always perfectly aligned with the task data, eliminating rubric drift by construction.
 

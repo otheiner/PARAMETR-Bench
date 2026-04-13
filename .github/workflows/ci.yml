@@ -24,7 +24,4 @@ jobs:
 
       - name: Validate tasks
         run: |
-          python run.py \
-            --validate-only \
-            --difficulty easy \
-            --seeds 0
+          python run.py --validate-only --difficulty easy --seeds 0

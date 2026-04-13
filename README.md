@@ -44,7 +44,7 @@ cd physics-analysis-benchmarks
 pip install -r requirements.txt
 ```
 
-The framework uses [litellm](https://github.com/BerriAI/litellm), supporting both local models via [Ollama](https://ollama.com) and API-based models. To use API models, add your keys:
+The framework uses [litellm](https://github.com/BerriAI/litellm), supporting both local models via [Ollama](https://ollama.com) and API-based models. If you want to use local models make sure that your `ollama` server is installed and running (see Ollama link). To use API models, add your keys:
 
 ```bash
 cp .env.example .env   # fill in your API keys to .env
@@ -56,9 +56,11 @@ Validate task generation without API calls and inspect generated data locally:
 python run.py --validate-only
 ```
 
+Run the benchmark and produce your results (you can plug any models of your choice supported by `litellm`). Framework allows non-agentic (no tools allowed) and agentic (tool use allowed) evaluation. See details in corresponding subsections below.
+
 ## Non-agentic evaluation
 
-Run the benchmark and produce your results (you can plug any models of your choice supported by `litellm`):
+For no-agentic evaluation simply run:
 
 ```bash
 python run.py --models gemini/gemini-3.1-flash-lite-preview \
@@ -69,7 +71,7 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
 
 ## Agentic evaluation
 
-Build the sandbox Docker image and use flag `--agentic`:
+Agentic evaluation enables running python with a few allowed pythonlibraries specified in `sandbox/requirements.txt`. Python is executed in Docker image without access to the Internet, memory-capped, not allowing writiny `.pyc` files. Build the sandbox Docker image and run benchmark using flag `--agentic`:
 
 ```bash
 docker build -t benchmark-sandbox sandbox/

@@ -118,7 +118,7 @@ I am a particle physicist who recently got into LLM evaluation and I built this 
 Clone repo and install dependencies:
 
 ```bash
-git clone https://github.com/otheiner/physics-analysis-benchmarks
+git clone https://github.com/otheiner/PARAMETR-Bench.git
 cd physics-analysis-benchmarks
 pip install -r requirements.txt
 ```

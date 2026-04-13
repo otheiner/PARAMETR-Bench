@@ -241,7 +241,7 @@ class HubbleConstant(Task):
         df_out['mean_mag_cepheid'] = df_out['mean_mag_cepheid'].map('{:.3f}'.format)
         df_out['period [days]'] = df_out['period [days]'].map('{:.4f}'.format)
         df_out[['galaxy_ID' , 'cepheid_ID', 'mean_mag_cepheid', 'period [days]']].to_csv(\
-                                self.input_dir / 'cepheids_mesurements.csv', index=False)
+                                self.input_dir / 'cepheids_measurements.csv', index=False)
         
         # Print extracted redshifts to .csv file
         analyzed_galaxies = generated_data.loc[generated_data['z'].notna() & \

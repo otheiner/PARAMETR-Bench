@@ -56,8 +56,11 @@ class Evaluator:
             except (litellm.ServiceUnavailableError,
                     litellm.RateLimitError) as e:
                 if attempt == 2:
+                    print(e)
+                    print(f"✗ API unavailable after 3 attempts:")
                     raise
                 wait = 30 * (attempt + 1)
+                print(f"ERROR: {e}")
                 print(f"⚠  API unavailable — retrying in {wait}s ({attempt+1}/3)")
                 time.sleep(wait)
 
@@ -106,115 +109,129 @@ class Evaluator:
         Agentic evaluation — model can write and execute Python scripts.
         Images are included in the first message and remain accessible
         throughout the conversation via the full history.
-        Loops until model returns final answer without tool calls
-        or until max_turns is reached.
+        A persistent workspace is shared across all turns so the agent
+        can save and load intermediate files between tool calls.
         """
-        messages = [{
-            'role':    'user',
-            'content': [
-                {'type': 'text', 'text': task.get_prompt() + load_agentic_prompt(max_turns)},
-                *task.get_input_files(model)
-            ]
-        }]
+        # Create persistent workspace for this session
+        session_dir = Path(tempfile.mkdtemp())
 
-        for turn in range(max_turns):
-            response = self._litellm_completion_with_retry(
-                model       = model,
-                messages    = messages,
-                tools       = TOOLS,
-                temperature = 0.0
-            )
+        try:
+            # Copy input files once into session workspace
+            shutil.copytree(task.input_dir, session_dir, dirs_exist_ok=True)
 
-            message = response.choices[0].message
+            messages = [{
+                'role':    'user',
+                'content': [
+                    {'type': 'text', 
+                     'text': task.get_prompt() + load_agentic_prompt(max_turns)},
+                            *task.get_input_files(model)
+                ]
+            }]
 
-            # No tool calls — model finished analysis, ask for summary
-            if not message.tool_calls:
-                messages.append(message.model_dump())
-                messages.append({
-                    'role':    'user',
-                    'content': [
-                        {
-                            'type': 'text',
-                            'text': (
-                                'Analysis complete. Now state your final results '
-                                'explicitly following the output format specified '
-                                'in the task instructions. Do not use any tools — '
-                                'only summarise your findings in plain text.'
-                            )
-                        }
-                    ]
-                })
-
-                summary = self._litellm_completion_with_retry(
+            for turn in range(max_turns):
+                response = self._litellm_completion_with_retry(
                     model       = model,
                     messages    = messages,
+                    tools       = TOOLS,
                     temperature = 0.0
                 )
 
-                final_answer = summary.choices[0].message.content or ''
+                message = response.choices[0].message
 
-                print(f"\n{'-' * 50}")
-                print("FINAL ANSWER:")
-                print('-' * 50)
-                print(final_answer)
+                # No tool calls — model finished analysis, ask for summary
+                if not message.tool_calls:
+                    messages.append(message.model_dump())
+                    messages.append({
+                        'role':    'user',
+                        'content': [
+                            {
+                                'type': 'text',
+                                'text': (
+                                    'Analysis complete. Now state your final results '
+                                    'explicitly following the output format specified '
+                                    'in the task instructions. Do not use any tools — '
+                                    'only summarise your findings in plain text.'
+                                )
+                            }
+                        ]
+                    })
 
-                return final_answer
-
-            # Append assistant turn to history
-            messages.append(message.model_dump())
-
-            # Execute each tool call
-            for tool_call in message.tool_calls:
-                code   = json.loads(tool_call.function.arguments)['code']
-                output = self._execute_python(code, task)
-
-                print(f"\n{'-' * 50}")
-                print(f"TOOL CALL (turn {turn + 1}):")
-                print(f"\n{'-' * 50}")
-                print(code)
-                print(f"OUTPUT:")
-                print(output)
-
-                # Truncate long outputs to avoid context explosion
-                if len(output) > 5000:
-                    output = output[:5000] + "\n...(truncated)"
-
-                messages.append({
-                    'role':         'tool',
-                    'tool_call_id': tool_call.id,
-                    'name':         'execute_python',
-                    'content':      output
-                })
-
-        # Max turns reached — ask for summary of what was found
-        messages.append({
-            'role':    'user',
-            'content': [
-                {
-                    'type': 'text',
-                    'text': (
-                        'Maximum tool calls reached. State your final results '
-                        'explicitly following the output format specified in the '
-                        'task instructions based on what you have found so far.'
+                    summary = self._litellm_completion_with_retry(
+                        model       = model,
+                        messages    = messages,
+                        temperature = 0.0
                     )
-                }
-            ]
-        })
 
-        summary = self._litellm_completion_with_retry(
-            model       = model,
-            messages    = messages,
-            temperature = 0.0
-        )
+                    final_answer = summary.choices[0].message.content or ''
 
-        final_answer = summary.choices[0].message.content or "No summary produced."
+                    print(f"\n{'-' * 50}")
+                    print("FINAL ANSWER:")
+                    print('-' * 50)
+                    print(final_answer)
 
-        print(f"\n{'-' * 50}")
-        print("FINAL ANSWER (max turns reached):")
-        print('-' * 50)
-        print(final_answer)
+                    return final_answer
 
-        return final_answer
+                # Append assistant turn to history
+                messages.append(message.model_dump())
+
+                # Execute each tool call
+                for tool_call in message.tool_calls:
+                    code   = json.loads(tool_call.function.arguments)['code']
+                    output = self._execute_python(code, task, session_dir)
+
+                    print(f"\n{'-' * 50}")
+                    print(f"TOOL CALL (turn {turn + 1}):")
+                    print(f"\n{'-' * 50}")
+                    print(code)
+                    print(f"OUTPUT:")
+                    print(output)
+
+                    # Truncate long outputs to avoid context explosion
+                    if len(output) > 5000:
+                        output = output[:5000] + "\n...(truncated)"
+
+                    messages.append({
+                        'role':         'tool',
+                        'tool_call_id': tool_call.id,
+                        'name':         'execute_python',
+                        'content':      output
+                    })
+
+            # Max turns reached — ask for summary of what was found
+            messages.append({
+                'role':    'user',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': (
+                            'Maximum tool calls reached. State your final results '
+                            'explicitly following the output format specified in the '
+                            'task instructions based on what you have found so far.'
+                        )
+                    }
+                ]
+            })
+
+            summary = self._litellm_completion_with_retry(
+                model       = model,
+                messages    = messages,
+                temperature = 0.0
+            )
+
+            final_answer = summary.choices[0].message.content or "No summary produced."
+
+            print(f"\n{'-' * 50}")
+            print("FINAL ANSWER (max turns reached):")
+            print('-' * 50)
+            print(final_answer)
+
+            return final_answer
+
+        finally:
+            # Clean up session workspace — always runs even if exception occurs
+            shutil.rmtree(session_dir, ignore_errors=True)
+
+
 
     # ─────────────────────────────────────────
     # Judge
@@ -352,25 +369,34 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Execute Python in Docker container sandbox
     # ─────────────────────────────────────────
-    def _execute_python(self, code: str, task: Task) -> str:
-        client = docker.from_env()
-
-        # Create temp directory with input files + script
-        tmpdir = Path(tempfile.mkdtemp())
-
+    def _execute_python(self, code: str, task: Task,
+                    session_dir: Path) -> str:
+        """
+        Execute model-generated Python code in an isolated Docker container.
+        If session_dir is provided, it is mounted as read-write workspace
+        allowing the agent to persist files between turns.
+        Otherwise a fresh read-only workspace is created per call.
+        """
+        # Check Docker daemon is running before attempting anything
         try:
-            # Copy input files
-            shutil.copytree(
-                task.input_dir,
-                tmpdir,
-                dirs_exist_ok = True
+            client = docker.from_env()
+            client.ping()
+        except docker.errors.DockerException:
+            raise RuntimeError(
+                "⚠  Docker daemon is not running. "
+                "Start Docker Desktop and try again."
             )
 
-            # Write script
+        # Use persistent session_dir
+        tmpdir  = session_dir
+        mode    = 'rw'      # read-write — agent can save files
+        cleanup = False     # session_dir managed by caller
+
+        try:
+            # Write script into workspace
             (tmpdir / 'script.py').write_text(code)
 
-            # Mount as read-only volume
-            container = client.containers.run(
+            output = client.containers.run(
                 image         = 'benchmark-sandbox',
                 command       = 'python /home/agent/workspace/script.py',
                 working_dir   = '/home/agent/workspace',
@@ -382,7 +408,7 @@ class Evaluator:
                 volumes       = {
                     str(tmpdir): {
                         'bind': '/home/agent/workspace',
-                        'mode': 'ro'        # read-only mount
+                        'mode': mode
                     }
                 },
                 tmpfs         = {'/tmp': ''},
@@ -392,7 +418,7 @@ class Evaluator:
                 remove        = True,
             )
 
-            return container.decode() if container else "(no output)"
+            return output.decode() if output else "(no output)"
 
         except docker.errors.ContainerError as e:
             return e.stderr.decode() if e.stderr else str(e)
@@ -401,4 +427,5 @@ class Evaluator:
             return f"Execution error: {e}"
 
         finally:
-            shutil.rmtree(tmpdir, ignore_errors=True)
+            if cleanup:
+                shutil.rmtree(tmpdir, ignore_errors=True)

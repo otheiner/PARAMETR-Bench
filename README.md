@@ -80,7 +80,7 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
 <details>
 <summary><strong>Expand here</strong></summary>
 
-Agentic evaluation enables running python with a few allowed python libraries specified in `sandbox/requirements.txt`. Python is executed in safe Docker sandbox environment without access to the Internet, memory-capped to 512 MB, not allowing writing `.pyc` files. Build the sandbox Docker image and run benchmark using flag `--agentic`:
+Agentic evaluation enables running python with a few allowed python libraries specified in `sandbox/requirements.txt`. Python is executed in safe Docker sandbox environment without access to the Internet, memory-capped to 512 MB, not allowing writing `.pyc` files. **First of all, run docker daemon on your machine!** Build the sandbox Docker image and run benchmark using flag `--agentic`:
 
 ```bash
 docker build -t benchmark-sandbox sandbox/

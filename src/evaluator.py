@@ -119,6 +119,7 @@ class Evaluator:
             # Copy input files once into session workspace
             shutil.copytree(task.input_dir, session_dir, dirs_exist_ok=True)
 
+            # Include input files in the first message
             messages = [{
                 'role':    'user',
                 'content': [

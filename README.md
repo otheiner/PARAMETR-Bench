@@ -9,7 +9,7 @@
 
 # 📊 PARAMETR-Bench  
 
-**P**rocedural **A**nd **R**igorous **A**ssassement using **MET**a**R**ubrics: A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.
+**P**rocedural **A**nd **R**igorous **A**ssessment using **MET**a**R**ubrics: A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.
 
 ## What is this?
 

@@ -3,7 +3,7 @@
         {
             "key": "faulty_supplies",
             "source": "qa_data",
-            "name": "Correctly listed faulty supplies.",
+            "name": "Listed faulty supplies.",
             "description": "Did the model list supply {supply_ID} as faulty in DATA FOR QUALITY ASSURANCE  section?",
             "weight": 20.0
         },
@@ -17,28 +17,28 @@
         {
             "key": "supplies_frequency",
             "source": "qa_data",
-            "name": "Correctly compute frequency of faulty supply.",
+            "name": "Computed frequency of faulty supply.",
             "description": "Did the model list that supply {supply_ID} has frequency {frequency} Hz in DATA FOR QUALITY ASSURANCE  section?",
             "weight": 20.0
         },
         {
             "key": "supply_batch",
             "source": "qa_data",
-            "name": "Correctly listed batch of supply.",
+            "name": "Listed batch of supply.",
             "description": "Did the model list that supply {supply_ID} was manufactured in batch {batch} in DATA FOR QUALITY ASSURANCE  section?",
             "weight": 2.0
         },
         {
             "key": "supply_manufacturing_machine",
             "source": "qa_data",
-            "name": "Correctly listed manufacturing machine of supply.",
+            "name": "Listed manufacturing machine of supply.",
             "description": "Did the model list that supply {supply_ID} was manufactured by machine {machine}  section?",
             "weight": 2.0
         },
         {
             "key": "faulty_machines",
             "source": "faulty_machines",
-            "name": "Correctly identified faulty machines.",
+            "name": "Identified faulty machines.",
             "description": "Did the model list machine {machine} as faulty in MACHINES(failure > 10%)  section?",
             "weight": 30.0
         },

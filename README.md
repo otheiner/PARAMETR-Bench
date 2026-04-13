@@ -56,11 +56,14 @@ Validate task generation without API calls and inspect generated data locally:
 python run.py --validate-only
 ```
 
-Run the benchmark and produce your results (you can plug any models of your choice supported by `litellm`). Framework allows non-agentic (no tools allowed) and agentic (tool use allowed) evaluation. See details in corresponding subsections below.
+Run the benchmark and produce your results (you can plug any models of your choice supported by `litellm`). Framework allows non-agentic (no tools allowed) and agentic (allows running python scripts) evaluation. See details in corresponding subsections below.
 
 ## Non-agentic evaluation
 
-For no-agentic evaluation simply run:
+<details>
+<summary><strong>Expand here</strong></summary>
+
+For non-agentic evaluation simply run:
 
 ```bash
 python run.py --models gemini/gemini-3.1-flash-lite-preview \
@@ -68,10 +71,14 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
               --difficulty medium \
               --seeds 0 1
 ```
+</details>
 
 ## Agentic evaluation
 
-Agentic evaluation enables running python with a few allowed pythonlibraries specified in `sandbox/requirements.txt`. Python is executed in Docker image without access to the Internet, memory-capped, not allowing writiny `.pyc` files. Build the sandbox Docker image and run benchmark using flag `--agentic`:
+<details>
+<summary><strong>Expand here</strong></summary>
+
+Agentic evaluation enables running python with a few allowed python libraries specified in `sandbox/requirements.txt`. Python is executed in safe Docker sandbox environment without access to the Internet, memory-capped to 512 MB, not allowing writing `.pyc` files. Build the sandbox Docker image and run benchmark using flag `--agentic`:
 
 ```bash
 docker build -t benchmark-sandbox sandbox/
@@ -81,6 +88,7 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
               --agentic \
               --seeds 0 1
 ```
+</details>
 
 # Results
 

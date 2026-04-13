@@ -79,6 +79,13 @@ Because tasks are generated procedurally, the number of generated rubrics (insta
 
 </details>
 
+<p align="center">
+    <br>
+  <img src="https://private-user-images.githubusercontent.com/44167540/577691814-2411dc3a-c4b0-4d94-81fb-c01289c5835b.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzYxMjI5MTgsIm5iZiI6MTc3NjEyMjYxOCwicGF0aCI6Ii80NDE2NzU0MC81Nzc2OTE4MTQtMjQxMWRjM2EtYzRiMC00ZDk0LTgxZmItYzAxMjg5YzU4MzViLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA0MTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNDEzVDIzMjMzOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTE4ZTE0YjZlYjllYzE3MjlkNjQ2M2I4ODEzYTk1MjM3MGRkZjlmMDJlY2VkM2JjYjAyNGM2YTY0YzRmY2ZhMWQmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.1XtGCpcRlJ--y5CUauL47pfOKtVU74JSukT1BRqSK8g" width="900" title="Preview of some input files fenerated procedurally.">
+    <br><br>
+      <i> Figure: Preview of some input files generated procedurally.</i>
+</p>
+
 ## The core idea
 
 Traditional benchmarks rely on fixed test sets that leak into training data, becoming contaminated or saturated. Common solutions are hiding test sets or constantly adding new questions. These approaches either sacrifice benchmark transparency or require unsustainable effort.
@@ -105,7 +112,6 @@ Our framework utilizes user-specified seeds to ensure that task generation is ra
 ## Motivation 
 
 I am a particle physicist who recently got into LLM evaluation and I built this as a passion project to test if models can actually do science. I tried to designed the architecture to specifically address major issues in the field, such as benchmark contamination, rubric drift, and the stochastic nature of LLM responses. If you have any questions, comments, suggestionson, or you would be interested in contributing, don't hesitate to reach out to me [here](https://otheiner.github.io/#contact).
-
 
 # Quick start
 

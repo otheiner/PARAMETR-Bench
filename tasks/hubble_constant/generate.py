@@ -10,14 +10,11 @@ Author: Ondrej Theiner
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import json
-from pathlib import Path
 from src.task import Task
 import random
 import string
 import math
 import os
-import shutil
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 from scipy.stats import linregress
 

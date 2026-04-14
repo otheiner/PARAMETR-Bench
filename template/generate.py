@@ -5,11 +5,6 @@ Description: [BRIEF DESCRIPTION]
 Author: [YOUR NAME]
 """
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import json
-from pathlib import Path
 from src.task import Task
 
 

@@ -111,10 +111,10 @@ class HubbleConstant(Task):
     # ############################################################
     # # Task generating method
     # ############################################################
-    def generate_task(self):
+    def _generate(self):
         """
-        Generate observed emission spectra of several galaxies, generate informations about 
-        Cepheids in these galaxies and let the model estimate the Hubble constant based on these 
+        Generate observed emission spectra of several galaxies, generate informations about
+        Cepheids in these galaxies and let the model estimate the Hubble constant based on these
         data.
         """
         # Set random seed for reproducibility

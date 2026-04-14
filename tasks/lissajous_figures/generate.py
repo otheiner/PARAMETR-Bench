@@ -24,9 +24,9 @@ class LissajousFigures(Task):
     # ############################################################
     # # Task generating method
     # ############################################################
-    def generate_task(self):
+    def _generate(self):
         """
-        <FILL-THIS-IN> DESCRIBE HOW THE DATA IS GENERATED, WHAT THE GROUND TRUTH IS AND HOW THE 
+        <FILL-THIS-IN> DESCRIBE HOW THE DATA IS GENERATED, WHAT THE GROUND TRUTH IS AND HOW THE
         TASK IS POPULATED
         """
         # ======= RANOMNESS =======

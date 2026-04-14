@@ -22,9 +22,9 @@ class ComputeAverage(Task):
     # ############################################################
     # # Main method that needs to be implemented by user
     # ############################################################
-    def generate_task(self):
+    def _generate(self):
         """
-        This is test task to demonstarte the framework.
+        This is test task to demonstrate the framework.
         """
         # Load parameters from config
         N_NUMBERS = self.get_params()['N_NUMBERS']

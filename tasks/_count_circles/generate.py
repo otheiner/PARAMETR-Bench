@@ -64,7 +64,7 @@ class TestTask(Task):
     # ############################################################
     # # Main method that needs to be implemented by user
     # ############################################################
-    def generate_task(self):
+    def _generate(self):
         # Load configuration
         N_FILES   = self.get_params()['N_FILES']
         N_CIRCLES = self.get_params()['N_CIRCLES']

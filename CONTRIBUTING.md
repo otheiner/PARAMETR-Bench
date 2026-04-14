@@ -9,7 +9,7 @@ python new_task.py --name my_task --author "Your Name"
 ```
 
 2) **Create the task by:**
-   - Implementing `generate_task()` in `tasks/my_task/generate.py`.
+   - Implementing `_generate()` in `tasks/my_task/generate.py`.
    - Filling in `tasks/my_task/config.json` specifying dificulty levels.
    - Writing prompt in `tasks/my_task/prompt.md`.
    - Writing grading criteria in `tasks/my_task/metarubrics.json`.

@@ -175,13 +175,13 @@ python run.py --models gemini/gemini-3.1-flash-lite-preview \
 Each task is defined by four files:
 
 - `prompt.md` - prompt defining the task written in natural language
-- `generate.py` - simulation code producing input data and ground truth
+- `generate.py` - simulation code producing input data and ground truth (implement `_generate()`)
 - `config.json` - difficulty parameters loaded in `generate.py` (each task currently defines easy, medium, hard levels)
 - `metarubrics.json` - rubric templates instantiated from generated data  
 
 The framework then automatically follows this pipeline:
 
-1) `task.generate_task()` - generates fresh input_data/ + ground_truth/
+1) `task.generate_task()` - calls `_generate()` to produce fresh input_data/ + ground_truth/
 2) `task.populate_metarubrics()` - fills metarubrics (rubric templates) from ground truth
 3) `task.generate_rubrics()` - creates instances of metarubrics and produces rubrics.json
 4) `evaluator.run()` - sends to model, uses LLM-as-judge to judge output, saves results

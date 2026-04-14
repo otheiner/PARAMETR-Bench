@@ -13,8 +13,6 @@ import random
 import matplotlib.pyplot as plt
 import string
 import os
-import json
-from pathlib import Path
 from src.task import Task
 
 

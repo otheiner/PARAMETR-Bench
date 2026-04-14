@@ -10,7 +10,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from src.task import Task, TaskResults, MetarubricResult
 from src.utils import get_git_hash
-from src.tools import TOOLS, load_agentic_prompt
+from src.tools import TOOLS, _load_sandbox_libraries
 
 import litellm
 litellm.request_timeout = 300
@@ -63,6 +63,24 @@ class Evaluator:
                 print(f"ERROR: {e}")
                 print(f"⚠  API unavailable — retrying in {wait}s ({attempt+1}/3)")
                 time.sleep(wait)
+
+    # ─────────────────────────────────────────
+    # Load judge prompt
+    # ─────────────────────────────────────────
+    def _load_judge_prompt(self, model_output: str, criteria: str) -> str:
+        """Load judge prompt"""
+        template = (Path(__file__).parent / 'judge_prompt.md').read_text()
+        return template.format(model_output = model_output,
+                               criteria = criteria)
+    
+    # ─────────────────────────────────────────
+    # Load agentic prompt
+    # ─────────────────────────────────────────
+    def load_agentic_prompt(self, max_turns: int) -> str:
+        """Load agentic prompt addition and fill in available libraries."""
+        template = (Path(__file__).parent / 'agentic_prompt.md').read_text()
+        return template.format(libraries=_load_sandbox_libraries(),
+                            max_turns = max_turns)
 
     # ─────────────────────────────────────────
     # Send to model
@@ -124,7 +142,7 @@ class Evaluator:
                 'role':    'user',
                 'content': [
                     {'type': 'text', 
-                     'text': task.get_prompt() + load_agentic_prompt(max_turns)},
+                     'text': task.get_prompt() + self.load_agentic_prompt(max_turns)},
                             *task.get_input_files(model)
                 ]
             }]
@@ -286,14 +304,10 @@ class Evaluator:
     def _judge_single(self, rubric: str,
                        model_output: str,
                        judge: str) -> bool:
-        """One rubric, one YES/NO question — simplest possible judge call."""
-        prompt = f"""Model response:
-                    {model_output}
-
-                    Criterion:
-                    {rubric}
-
-                    Answer YES or NO only."""
+        
+        """One rubric, one YES/NO question"""
+        prompt = self._load_judge_prompt(model_output = model_output,
+                                        criteria = rubric)
 
         try:
             response = self._litellm_completion_with_retry(
@@ -322,21 +336,9 @@ class Evaluator:
             f"{i+1}. {r}" for i, r in enumerate(rubrics)
         )
         
-        prompt = f"""You are evaluating a scientific analysis response.
-
-                    For each numbered criterion below, answer YES or NO.
-                    Return ONLY a JSON array of booleans in the same order as the criteria.
-                    No explanation. No markdown. No extra text.
-
-                    Example for 3 criteria: [true, false, true]
-
-                    Model response:
-                    {model_output}
-
-                    Criteria:
-                    {numbered}
-
-                    Answer JSON array only."""
+        """Batch of rubrics, multiple YES/NO questions"""
+        prompt = self._load_judge_prompt(model_output = model_output,
+                                        criteria = numbered)
 
         try:
             response = self._litellm_completion_with_retry(
@@ -364,7 +366,7 @@ class Evaluator:
             return 0
         
         except Exception as e:
-            print(f"⚠  Judge call failed: {e}")
+            print(f"⚠  Judge call failed: {e} — counting as not passed")
             return 0
 
     # ─────────────────────────────────────────

@@ -7,7 +7,6 @@
 ![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=for-the-badge&logo=Matplotlib&logoColor=black)
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-blueviolet?style=for-the-badge)
 
-
 # 📊 PARAMETR-Bench  
 
 **P**rocedural **A**nd **R**igorous **A**ssessment using **MET**a**R**ubrics: A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.

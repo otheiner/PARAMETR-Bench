@@ -1,0 +1,19 @@
+{
+    "task_name": "Test task",
+
+    "difficulties": {
+        "easy": {
+            "N_NUMBERS": 1
+        },
+        "medium": {
+            "N_NUMBERS": 10
+        },
+        "hard": {
+            "N_NUMBERS": 100
+        }
+    },
+
+    "fixed_parameters": {
+        "OFFSET": 42
+    }
+}

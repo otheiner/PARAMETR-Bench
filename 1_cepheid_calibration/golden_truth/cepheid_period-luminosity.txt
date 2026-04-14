@@ -1,9 +1,0 @@
-We assumed the period-luminosity calibration for Cepheid variables
-in form M = a[log(P) - 1] + b.
-
-Parameters estimated by our analysis are:
-
-┌──────────────────────┐
-│  a = -2.292 ± 0.609  │
-│  b = -4.199 ± 0.415  │
-└──────────────────────┘

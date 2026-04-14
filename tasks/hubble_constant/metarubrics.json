@@ -1,0 +1,32 @@
+{
+    "metarubrics": [
+        {
+            "key": "no_of_galaxies",
+            "source": "results",
+            "name": "Correct number of galaxies",
+            "description": "Did the model estimate redshifts of exactly {no_of_galaxies} galaxies?",
+            "weight": 5.0
+        },
+        {
+            "key": "z_estimation",
+            "source": "analyzed_galaxies",
+            "name": "Redshift estimation",
+            "description": "Did the model compute that {galaxy_ID} has redshift {z}, or value strictly inside interval [{z_min} , {z_max}]?",
+            "weight": 50.0
+        },
+        {
+            "key": "h_estimation",
+            "source": "results",
+            "name": "Hubble constant estimation",
+            "description": "Did the model compute that Hubble constant as {hubble_constant} km/s/Mpc, or value strictly inside interval [{hubble_constant_min}, {hubble_constant_max}] km/s/Mpc?",
+            "weight": 35.0
+        },
+        {
+            "key": "h_stdev_estimation",
+            "source": "results",
+            "name": "Uncertainty on Hubble constant",
+            "description": "Did the model compute statistical uncertainty on estimation of Hubble constant as {stdev} km/s/Mpc, or value strictly inside interval [{stdev_min}, {stdev_max}] km/s/Mpc?",
+            "weight": 10.0
+        }
+    ]
+}

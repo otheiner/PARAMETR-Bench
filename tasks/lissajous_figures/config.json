@@ -1,0 +1,44 @@
+{
+    "task_name": "lissajous_figures",
+
+    "difficulties": {
+        "easy": {
+            "NUMBER_OF_MEASUREMENTS" : 5,
+            "NUMBER_OF_UNITS": 30,
+            "NUMBER_OF_DAYS": 10,
+            "NUMBER_OF_MACHINES" : 3,
+            "NUMBER_OF_BATCHES" : 2,
+            "MACHINE_FAULTY_PROBABILITY" : 0.5
+        },
+        "medium": {
+            "NUMBER_OF_MEASUREMENTS" : 20,
+            "NUMBER_OF_UNITS": 200,
+            "NUMBER_OF_DAYS": 20,
+            "NUMBER_OF_MACHINES" : 5,
+            "NUMBER_OF_BATCHES" : 3,
+            "MACHINE_FAULTY_PROBABILITY" : 0.3
+        },
+        "hard": {
+            "NUMBER_OF_MEASUREMENTS" : 50,
+            "NUMBER_OF_UNITS": 2000,
+            "NUMBER_OF_DAYS": 60,
+            "NUMBER_OF_MACHINES" : 12,
+            "NUMBER_OF_BATCHES" : 6,
+            "MACHINE_FAULTY_PROBABILITY" : 0.2
+        }
+    },
+
+    "fixed_parameters": {
+        "FREQUENCY_PHASESHIFTS":{"10": 1,
+                                "20": 0.25,
+                                "30": 0.25,
+                                "40": 0.3333,
+                                "50": 0.3333,
+                                "60": 0.25,
+                                "70": 0.3333,
+                                "80": 0.3333,
+                                "90": 0.3333,
+                                "100":0.5
+                                }
+    }
+}

@@ -1,0 +1,12 @@
+numpy
+pandas
+scipy
+statsmodels
+matplotlib
+litellm
+python-dotenv
+requests
+astropy
+
+# Not mandatory, but it is necessary for agentic evaluation.
+docker

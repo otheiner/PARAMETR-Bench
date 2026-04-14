@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, repo-redesign]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate tasks
+        run: |
+          python run.py --validate-only --difficulty easy --seeds 0
+
+      - name: Validate hidden tasks
+        run: |
+          for task in tasks/_*/; do
+            name=$(basename "$task")
+            echo "Validating $name..."
+            python run.py --task "$name" --validate-only --difficulty easy --seeds 0
+          done

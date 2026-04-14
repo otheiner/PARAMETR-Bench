@@ -1,0 +1,23 @@
+{
+    "task_name": "[TASK NAME]",
+
+    "difficulties": {
+        "easy": {
+            "param_1": 1,
+            "param_2": 2
+        },
+        "medium": {
+            "param_1": 10,
+            "param_2": 20
+        },
+        "hard": {
+            "param_1": 100,
+            "param_2": 200
+        }
+    },
+
+    "fixed_parameters": {
+        "fixed_param_1": 67,
+        "fixed_param_2": 123
+    }
+}

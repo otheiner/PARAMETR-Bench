@@ -211,7 +211,7 @@ def main():
                     # Always clean up tmp file
                     ref_path.unlink(missing_ok=True)
 
-                print(f"✓ Validation {task_name} successfully finished — skipping model evaluation")
+                print(f"✓ Validation {task_name} successfully finished — skipping model evaluation\n")
                 continue
             
             for tested_model in args.models:

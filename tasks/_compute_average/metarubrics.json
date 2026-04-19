@@ -15,7 +15,7 @@
             "weight": 2.0
         },
         {
-            "key": "file_format_test",
+            "key": "non_empty_answer",
             "source": "none",
             "name": "Returned answer.",
             "description": "Did the model return non-empty answer?",

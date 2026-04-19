@@ -14,7 +14,13 @@ python new_task.py --name my_task --author "Your Name"
    - Writing prompt in `tasks/my_task/prompt.md`.
    - Writing grading criteria in `tasks/my_task/metarubrics.json`.
      
-    The  framework handles everything else.
+The  framework handles everything else.
+
+Before starting writing the task, check two minimal working examples. 
+    -  `tasks/_count_circles/` — multimodal (images) task with tolerance-based grading
+    - `tasks/_compute_average/` — text-only task with computational grading
+
+These tasks are kept minimal on purpose. Follow the same structure — one `_generate()` method calling small private helpers, using `self.seed`, `self.get_params()`, `self.input_dir`, `self.ground_truth_dir`, and populating `self.ground_truth` with DataFrames.
 
 3) **Validate without API calls:**
 

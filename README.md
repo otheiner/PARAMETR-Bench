@@ -192,7 +192,7 @@ The framework then automatically follows this pipeline:
 
 # Contributing tasks
 
-If you are considering contributing task from your domain, refer to [`CONTRIBUTING.md`](https://github.com/otheiner/PARAMETR-Bench/tree/repo-redesign?tab=contributing-ov-file#contributing-a-task).
+If you are considering contributing task from your domain, refer to [`CONTRIBUTING.md`](CONTRIBUTING.md#contributing-a-task).
 
 # Citation
 

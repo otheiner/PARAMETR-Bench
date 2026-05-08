@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/1197193977.svg)](https://doi.org/10.5281/zenodo.20076421)
+[![DOI](https://github.com/otheiner/PARAMETR-Bench/issues/1#issuecomment-4405163565)](https://doi.org/10.5281/zenodo.20076421)
 [![CI](https://github.com/otheiner/PARAMETR-Bench/actions/workflows/ci.yml/badge.svg)](https://github.com/otheiner/PARAMETR-Bench/actions/workflows/ci.yml)
 
 # 📊 PARAMETR-Bench  

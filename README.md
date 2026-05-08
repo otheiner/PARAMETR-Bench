@@ -1,4 +1,6 @@
 [![DOI](https://github.com/user-attachments/assets/799b8ec5-cc08-4e1b-a182-4e784fa78244)](https://doi.org/10.5281/zenodo.20076421)
+[![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow?style=flat)](https://huggingface.co/spaces/otheiner/PARAMETR-Bench_demo)
+[![Blog](https://img.shields.io/badge/Blog-PARAMETR--Bench-2A6A9E?style=flat&logoColor=white)](https://otheiner.github.io/PARAMETR-Bench-blog/)
 [![CI](https://github.com/otheiner/PARAMETR-Bench/actions/workflows/ci.yml/badge.svg)](https://github.com/otheiner/PARAMETR-Bench/actions/workflows/ci.yml)
 
 # 📊 PARAMETR-Bench  

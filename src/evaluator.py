@@ -20,33 +20,72 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Public interface
     # ─────────────────────────────────────────
-    def run(self, task: Task, model: str, judge: str,
-            agentic: bool = False,
-            max_turns: int  = 10) -> TaskResults:
-        """Run full evaluation pipeline for one task/model/seed."""
-
-        # Step 1 — send task to model
+    def get_model_output(self, task: Task, model: str,
+                         agentic: bool, max_turns: int,
+                         dest_dir: Path) -> str:
+        """
+        Run model on task, save model_response.json + rubrics.json to dest_dir.
+        Returns the final answer string. Raises on any failure — nothing is saved
+        unless the model call fully succeeds.
+        """
         if agentic:
-            model_output, transcript = self._send_to_model_agentic(task, model, max_turns)
+            model_output, messages = self._send_to_model_agentic(task, model, max_turns)
         else:
-            model_output, transcript = self._send_to_model(task, model)
+            model_output, messages = self._send_to_model(task, model)
 
-        self._save_transcript(task, model, transcript)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        with open(dest_dir / 'model_response.json', 'w') as f:
+            json.dump({
+                'task':     task.folder.name,
+                'model':    model,
+                'seed':     task.seed,
+                'messages': messages,
+            }, f, indent=2)
 
-        # Step 2 — judge output against pre-generated rubrics
-        mr_results = self._judge(task, model_output, judge)
+        shutil.copy(task.ground_truth_dir / 'rubrics.json', dest_dir / 'rubrics.json')
+        print(f"✓ Model response saved: {dest_dir / 'model_response.json'}")
+        return model_output
 
-        # Step 3 — build and return TaskResults
-        return TaskResults(
-            task_name          = task.folder.name,
-            seed               = task.seed,
-            difficulty         = task.difficulty,
-            model              = model,
-            judge              = judge,
-            git_commit         = get_git_hash(),
-            timestamp          = datetime.now().isoformat(),
-            metarubric_results = mr_results
-        )
+    def get_judge_results(self, task: Task, model: str, model_output: str,
+                          rubrics_path: Path, judge: str,
+                          dest_dir: Path) -> list[MetarubricResult]:
+        """
+        Judge model_output against rubrics_path, save judge_response.json to dest_dir.
+        Raises on any failure — nothing is saved unless all metarubrics succeed.
+        """
+        with open(rubrics_path) as f:
+            rubrics_data = json.load(f)
+
+        mr_results, raw_data = self._judge(model_output, rubrics_data, judge)
+
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        with open(dest_dir / 'task_results.json', 'w') as f:
+            json.dump({
+                'task':       task.folder.name,
+                'model':      model,
+                'judge':      judge,
+                'seed':       task.seed,
+                'difficulty': task.difficulty,
+                'git_commit': get_git_hash(),
+                'timestamp':  datetime.now().isoformat(),
+                'metarubrics': [
+                    {
+                        'name':     mr.metarubric_name,
+                        'category': mr.category,
+                        'total':    mr.total,
+                        'passed':   mr.passed,
+                        'weight':   mr.weight,
+                    }
+                    for mr in mr_results
+                ],
+            }, f, indent=2)
+
+        with open(dest_dir / 'judge_response.json', 'w') as f:
+            json.dump({'metarubrics': raw_data}, f, indent=2)
+
+        print(f"✓ Task results saved: {dest_dir / 'task_results.json'}")
+        return mr_results
 
     # ─────────────────────────────────────────
     # Repeating attempts in case model API is unavailable
@@ -68,25 +107,6 @@ class Evaluator:
                 print(f"ERROR: {e}")
                 print(f"⚠  API unavailable — retrying in {wait}s ({attempt+1}/3)")
                 time.sleep(wait)
-
-    # ─────────────────────────────────────────
-    # Save full conversation transcript
-    # ─────────────────────────────────────────
-    def _save_transcript(self, task: Task, model: str, messages: list,
-                         results_dir: str = 'results'):
-        model_clean = model.replace('/', '-').replace(':', '-')
-        task_dir    = Path(results_dir) / task.folder.name / 'model_responses'
-        task_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{model_clean}__{task.difficulty}__seed{task.seed}.json"
-        path     = task_dir / filename
-        with open(path, 'w') as f:
-            json.dump({
-                'task':     task.folder.name,
-                'model':    model,
-                'seed':     task.seed,
-                'messages': messages,
-            }, f, indent=2)
-        print(f"✓ Transcript saved: {path}")
 
     # ─────────────────────────────────────────
     # Print thinking blocks from a message dump
@@ -385,47 +405,51 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Judge
     # ─────────────────────────────────────────
-    def _judge(self, task: Task,
-               model_output: str,
-               judge: str) -> list[MetarubricResult]:
-        """Load pre-generated rubrics and judge model output against them."""
-
-        with open(task.ground_truth_dir / 'rubrics.json') as f:
-            rubrics_data = json.load(f)
-
-        results = []
+    def _judge(self, model_output: str,
+               rubrics_data: dict,
+               judge: str) -> tuple[list[MetarubricResult], list[dict]]:
+        """
+        Judge model output against pre-loaded rubrics. Raises on any failure.
+        Returns (scores, raw_data) where raw_data drives judge_response.json.
+        """
+        results  = []
+        raw_data = []
         for mr_data in rubrics_data['metarubrics']:
             rubrics = [r['criterion'] for r in mr_data['rubrics']]
-            passed  = self._judge_metarubric(rubrics, model_output, judge)
+            passed, rubric_verdicts = self._judge_metarubric(rubrics, model_output, judge)
 
             results.append(MetarubricResult(
                 metarubric_name = mr_data['name'],
+                category        = mr_data.get('category', ''),
                 total           = len(rubrics),
                 passed          = passed,
                 weight          = mr_data['weight']
             ))
+            raw_data.append({
+                'name':     mr_data['name'],
+                'category': mr_data.get('category', ''),
+                'rubrics':  rubric_verdicts,
+            })
 
-        return results
+        return results, raw_data
 
     # ─────────────────────────────────────────
     # Judge metarubrics either as batch or single
     # ─────────────────────────────────────────
     def _judge_metarubric(self, rubrics: list[str],
                            model_output: str,
-                           judge: str) -> int:    
+                           judge: str) -> tuple[int, list[dict]]:
         """
-        Judge all criteria in one metarubric.
+        Returns (passed count, [{criterion, verdict}, ...]) where verdict is 'YES' or 'NO'.
         Uses batch call for API judges, single calls for local models.
         """
         if judge.startswith('ollama/'):
-            # Local models — one call per rubric, more reliable
-            passed = 0
+            rubric_verdicts = []
             for rubric in rubrics:
-                if self._judge_single(rubric, model_output, judge):
-                    passed += 1
-            return passed
+                verdict = self._judge_single(rubric, model_output, judge)
+                rubric_verdicts.append({'criterion': rubric, 'verdict': verdict})
+            return sum(1 for r in rubric_verdicts if r['verdict'] == 'YES'), rubric_verdicts
         else:
-            # API models — batch all rubrics in one call
             return self._judge_batch(rubrics, model_output, judge)
 
     # ─────────────────────────────────────────
@@ -433,71 +457,54 @@ class Evaluator:
     # ─────────────────────────────────────────
     def _judge_single(self, rubric: str,
                        model_output: str,
-                       judge: str) -> bool:
-        
-        """One rubric, one YES/NO question"""
-        prompt = self._load_judge_prompt(model_output = model_output,
-                                        criteria = rubric)
+                       judge: str) -> str:
+        """One rubric, one call. Returns 'YES' or 'NO'."""
+        prompt = self._load_judge_prompt(model_output=model_output, criteria=rubric)
+        response = self._litellm_completion_with_retry(
+            model       = judge,
+            messages    = [{'role': 'user', 'content': prompt}],
+            temperature = 0.0
+        )
+        raw = response.choices[0].message.content.strip().upper()
+        return 'YES' if raw.startswith('YES') else 'NO'
 
-        try:
-            response = self._litellm_completion_with_retry(
-                model       = judge,
-                messages    = [{'role': 'user', 'content': prompt}],
-                temperature = 0.0
-            )
-            answer = response.choices[0].message.content.strip().upper()
-            return answer.startswith('YES')
-
-        except Exception as e:
-            print(f"⚠  Judge call failed: {e} — counting as not passed")
-            return False
-        
     # ─────────────────────────────────────────
     # Batch rubrics in one metarubric
     # ─────────────────────────────────────────
     def _judge_batch(self, rubrics: list[str],
-                  model_output: str,
-                  judge: str) -> int:
+                     model_output: str,
+                     judge: str) -> tuple[int, list[dict]]:
         """
-        Send all rubrics in one call — for capable API models.
-        Returns number of criteria passed.
+        All rubrics in one call — for capable API models.
+        Returns (passed count, [{criterion, verdict}, ...]) where verdict is 'YES' or 'NO'.
         """
-        numbered = '\n'.join(
-            f"{i+1}. {r}" for i, r in enumerate(rubrics)
-        )
-        
-        """Batch of rubrics, multiple YES/NO questions"""
-        prompt = self._load_judge_prompt(model_output = model_output,
-                                        criteria = numbered)
+        numbered = '\n'.join(f"{i+1}. {r}" for i, r in enumerate(rubrics))
+        prompt   = self._load_judge_prompt(model_output=model_output, criteria=numbered)
 
-        try:
-            response = self._litellm_completion_with_retry(
-                model       = judge,
-                messages    = [{'role': 'user', 'content': prompt}],
-                temperature = 0.0
+        response = self._litellm_completion_with_retry(
+            model       = judge,
+            messages    = [{'role': 'user', 'content': prompt}],
+            temperature = 0.0
+        )
+        raw = response.choices[0].message.content.strip()
+
+        # Strip markdown if present
+        raw = re.sub(r'```json\s*', '', raw)
+        raw = re.sub(r'```\s*',     '', raw)
+        raw = raw.strip()
+
+        verdicts = json.loads(raw)
+
+        if len(verdicts) != len(rubrics):
+            raise ValueError(
+                f"Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics"
             )
-            raw = response.choices[0].message.content.strip()
-            
-            # Strip markdown if present
-            raw = re.sub(r'```json\s*', '', raw)
-            raw = re.sub(r'```\s*',     '', raw)
-            raw = raw.strip()
-            
-            verdicts = json.loads(raw)
-            
-            if len(verdicts) != len(rubrics):
-                print(f"⚠  Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics")
-                return 0
-            
-            return sum(1 for v in verdicts if v)
-        
-        except json.JSONDecodeError:
-            print(f"⚠  Judge parse failed — raw response: {raw[:200]}")
-            return 0
-        
-        except Exception as e:
-            print(f"⚠  Judge call failed: {e} — counting as not passed")
-            return 0
+
+        rubric_verdicts = [
+            {'criterion': r, 'verdict': 'YES' if v else 'NO'}
+            for r, v in zip(rubrics, verdicts)
+        ]
+        return sum(1 for v in verdicts if v), rubric_verdicts
 
     # ─────────────────────────────────────────
     # Run shell command in Docker sandbox

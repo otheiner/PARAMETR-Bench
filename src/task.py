@@ -87,10 +87,12 @@ class MetarubricResult:
         total:           total number of criteria
         passed:          number passing numerical check
         weight:          importance relative to other metarubrics
+        category:        metarubrics category allowing to group items by skill type   
     """
     metarubric_name: str
     total:           int
     passed:          int
+    category:        str
     weight:          float = 1.0
 
     @property
@@ -202,6 +204,7 @@ class TaskResults:
             'metarubrics': [
                 {
                     'name':         mr.metarubric_name,
+                    'category':     mr.category,
                     'total':        mr.total,
                     'passed':       mr.passed,
                     'weight':       mr.weight,
@@ -218,25 +221,28 @@ class TaskResults:
             }
         }
 
-    def save(self, results_dir: str = 'results'):
-        """
-        Save results to results/{task_name}/{model}__{difficulty}__seed{seed}.json
-        Creates directory if it doesn't exist.
-        """
-        # Sanitise model name for filename — replace / and : with -
-        model_clean = self.model.replace('/', '-').replace(':', '-')
-
-        task_dir = Path(results_dir) / self.task_name
-        task_dir.mkdir(parents=True, exist_ok=True)
-
-        filename = f"{model_clean}__{self.difficulty}__seed{self.seed}.json"
-        filepath = task_dir / filename
-
-        with open(filepath, 'w') as f:
-            json.dump(self.to_dict(), f, indent=2)
-
-        print(f"✓ Results saved: {filepath}")
-        return filepath
+    @classmethod
+    def from_dict(cls, d: dict) -> 'TaskResults':
+        """Reconstruct a TaskResults from a saved judge_response.json dict."""
+        return cls(
+            task_name          = d['task'],
+            seed               = d['seed'],
+            difficulty         = d['difficulty'],
+            model              = d['model'],
+            judge              = d['judge'],
+            git_commit         = d['git_commit'],
+            timestamp          = d['timestamp'],
+            metarubric_results = [
+                MetarubricResult(
+                    metarubric_name = mr['name'],
+                    category        = mr['category'],
+                    total           = mr['total'],
+                    passed          = mr['passed'],
+                    weight          = mr['weight'],
+                )
+                for mr in d['metarubrics']
+            ],
+        )
 
 # ─────────────────────────────────────────────────────────────
 # BenchmarkResults
@@ -248,7 +254,7 @@ class BenchmarkResults:
 
     Attributes:
         task_results:  list of TaskResults for each evaluated task
-        models:        models evaluated - can be multiple
+        model:         model evaluated
         judge:         judge model used for all runs
         difficulty:    difficulty level
         seeds:         random seeds used
@@ -256,12 +262,13 @@ class BenchmarkResults:
         timestamp:     timestamp of when benchmark run started
     """
     task_results:  list[TaskResults]
-    models:        list[str]
+    model:         str
     judge:         str
     difficulty:    str
     seeds:         list[int]
     git_commit:    str
     timestamp:     str
+    partial:       bool = False
 
     @property
     def success_rate(self) -> float:
@@ -347,23 +354,23 @@ class BenchmarkResults:
 
         return {
             'run': {
-                'models':     self.models,
+                'model':      self.model,
                 'judge':      self.judge,
                 'difficulty': self.difficulty,
                 'seeds':      self.seeds,
                 'git_commit': self.git_commit,
-                'timestamp':  self.timestamp
+                'timestamp':  self.timestamp,
+                'partial':    self.partial,
             },
             'by_model': model_summaries,
             'task_results': [tr.to_dict() for tr in self.task_results],
         }
 
-    def save(self, results_dir: str = 'results'):
-        """
-        Save all results to results/benchmark_results_{timestamp}.json.
-        """
-        Path(results_dir).mkdir(parents=True, exist_ok=True)
-        filepath = Path(results_dir) / f'benchmark_results_{self.timestamp}.json'
+    def save(self, run_dir: Path):
+        """Save aggregate results to run_dir/benchmark_results.json (or _partial-benchmark_results.json)."""
+        run_dir.mkdir(parents=True, exist_ok=True)
+        filename = '_partial-benchmark_results.json' if self.partial else 'benchmark_results.json'
+        filepath = run_dir / filename
 
         with open(filepath, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)

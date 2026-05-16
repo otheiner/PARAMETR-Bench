@@ -23,7 +23,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Evaluate LLMs on physics benchmark tasks.'
     )
-    parser.add_argument('--task',          type = str,
+    parser.add_argument('--tasks',         type = str, nargs = '+',
                         help='Specific task folder names. Omit to run all.')
     parser.add_argument('--model',         type = str,
                         default='ollama/llama3.2',
@@ -58,12 +58,21 @@ def parse_args():
 
 def generate_run_id(results_dir: Path) -> str:
     """Generate a unique 6-character alphanumeric run ID."""
-    existing = {p.name for p in results_dir.iterdir() if p.is_dir()} \
-               if results_dir.exists() else set()
+    existing_prefixes = {p.name[:6] for p in results_dir.iterdir() if p.is_dir()} \
+                        if results_dir.exists() else set()
     while True:
         rid = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
-        if rid not in existing:
+        if rid not in existing_prefixes:
             return rid
+
+
+def find_run_dir(results_dir: Path, run_id: str) -> Path:
+    """Find the run directory for a given 6-char run ID (dir name is {id}_{timestamp})."""
+    if results_dir.exists():
+        matches = [p for p in results_dir.iterdir() if p.is_dir() and p.name.startswith(run_id + '_')]
+        if matches:
+            return matches[0]
+    return results_dir / run_id  # fallback — triggers not-found error in caller
 
 
 def check_ollama_if_needed(model: str, judge: str):
@@ -103,17 +112,19 @@ def discover_tasks(tasks_dir='tasks') -> dict:
 
         if task_classes:
             discovered[task_folder.name] = task_classes[0]
-            print(f"  ✓ Discovered: {task_folder.name} → {task_classes[0].__name__}")
 
     return discovered
 
 
 def _aggregate_results(run_dir: Path, model: str, judge: str,
                         difficulty: str, seeds: list[int],
-                        task_names: list[str]) -> BenchmarkResults:
+                        task_names: list[str],
+                        failures: list[dict]) -> BenchmarkResults:
     """Load all task_results.json files and produce a BenchmarkResults."""
     task_results = []
     incomplete   = []
+
+    failure_index = {(f['task'], f['seed']): f for f in failures}
 
     model_clean = model.replace('/', '-').replace(':', '-')
     for task_name in task_names:
@@ -124,9 +135,15 @@ def _aggregate_results(run_dir: Path, model: str, judge: str,
                 with open(task_results_path) as f:
                     task_results.append(TaskResults.from_dict(json.load(f)))
             else:
-                incomplete.append({
-                    'task': task_name, 'seed': seed
-                })
+                entry = {'task': task_name, 'seed': seed}
+                if (task_name, seed) in failure_index:
+                    f = failure_index[(task_name, seed)]
+                    entry['step']   = f['step']
+                    entry['reason'] = f['reason']
+                else:
+                    entry['step']   = None
+                    entry['reason'] = 'Not attempted'
+                incomplete.append(entry)
 
     is_partial = bool(incomplete)
     if incomplete:
@@ -153,7 +170,6 @@ def main():
     results_dir = Path('results')
 
     # ── Discover tasks ────────────────────────────────────────
-    print("\nDiscovering tasks...")
     all_tasks = discover_tasks()
 
     if args.list:
@@ -165,7 +181,7 @@ def main():
     # ── Determine run folder and parameters ───────────────────
     if args.continue_run:
         run_id  = args.continue_run
-        run_dir = results_dir / run_id
+        run_dir = find_run_dir(results_dir, run_id)
         if not run_dir.exists():
             print(f"✗ Run '{run_id}' not found in {results_dir}/")
             sys.exit(1)
@@ -186,7 +202,8 @@ def main():
         print(f"✓ Continuing run: {run_id}  ({run_dir})")
     else:
         run_id  = generate_run_id(results_dir)
-        run_dir = results_dir / run_id
+        timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        run_dir = results_dir / f"{run_id}_{timestamp_str}"
         run_dir.mkdir(parents=True)
         model      = args.model
         judge      = args.judge
@@ -195,12 +212,13 @@ def main():
         agentic    = args.agentic
         max_turns  = args.max_turns
 
-        if args.task:
-            if args.task not in all_tasks:
-                print(f"✗ Task '{args.task}' not found.")
+        if args.tasks:
+            unknown = [t for t in args.tasks if t not in all_tasks]
+            if unknown:
+                print(f"✗ Unknown task(s): {unknown}")
                 print(f"  Available: {list(all_tasks.keys())}")
                 return
-            task_names = [args.task]
+            task_names = args.tasks
         else:
             task_names = [n for n in all_tasks if not n.startswith('_')]
 
@@ -238,7 +256,7 @@ def main():
 
     # ── Main loop ─────────────────────────────────────────────
     for task_name in task_names:
-        if task_name.startswith('_') and (not args.continue_run and args.task != task_name):
+        if task_name.startswith('_') and (not args.continue_run and (not args.tasks or task_name not in args.tasks)):
             print(f"✗ Skipping {task_name} — use --task {task_name} to run explicitly")
             continue
 
@@ -341,7 +359,7 @@ def main():
                     )
                 except Exception as e:
                     print(f"✗ Model failed [{task_name} / seed {seed} / {model}]: {e}")
-                    failures.append({'step': 'problem solving', 'task': task_name, 'seed': seed, 'model': model})
+                    failures.append({'step': 'problem solving', 'task': task_name, 'seed': seed, 'model': model, 'reason': str(e)})
                     continue
 
             # ── Judge step ───────────────────────────────────
@@ -359,7 +377,7 @@ def main():
                     )
                 except Exception as e:
                     print(f"✗ Judge failed [{task_name} / seed {seed} / {model}]: {e}")
-                    failures.append({'step': 'judge', 'task': task_name, 'seed': seed, 'model': model})
+                    failures.append({'step': 'judge', 'task': task_name, 'seed': seed, 'model': model, 'reason': str(e)})
 
     # ── Failure summary ───────────────────────────────────────
     if failures:
@@ -377,6 +395,7 @@ def main():
             difficulty = difficulty,
             seeds      = seeds,
             task_names = task_names,
+            failures   = failures,
         )
         benchmark.save(run_dir)
         if not failures:

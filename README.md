@@ -107,29 +107,6 @@ python run.py --validate-only
 
 You can also run full evals with local models via Ollama. You need to start the Ollama server and pass an Ollama model to `run.py`, e.g. `--model ollama/qwen2.5:3b`.
 
-# Adding new tasks
-
-The framework supports simple task additions. To scaffold a new task:
-
-```bash
-python new_task.py --name <task-name>
-```
-
-This creates a task folder with four files to fill in:
-
-- `prompt.md` — the task prompt, in natural language
-- `generate.py` — the data generator producing inputs and ground truth (implement `_generate()`)
-- `config.json` — difficulty parameters loaded by `generate.py` (currently: easy, medium, hard)
-- `metarubrics.json` — rubric templates that the framework instantiates from generated ground truth
-
-Once the four files are filled in, validate the task without spending API tokens:
-
-```bash
-python run.py --tasks <task-name> --validate-only
-```
-
-After that, the task is ready to run — the framework handles rubric instantiation, data generation, model invocation, and judging automatically.
-
 # Results
 
 This project is still in the initial stage and the first results to demonstrate the framework will be added soon.

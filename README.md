@@ -3,9 +3,11 @@
 [![Blog](https://img.shields.io/badge/Blog-PARAMETR--Bench-2A6A9E?style=flat&logoColor=white)](https://otheiner.github.io/PARAMETR-Bench-blog/)
 [![CI](https://github.com/otheiner/PARAMETR-Bench/actions/workflows/ci.yml/badge.svg)](https://github.com/otheiner/PARAMETR-Bench/actions/workflows/ci.yml)
 
-# 📊 PARAMETR-Bench  
+<h1 align="center">📊 PARAMETR-Bench</h1>
 
-**P**rocedural **A**nd **R**igorous **A**ssessment using **MET**a**R**ubrics: A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.
+<p align="center">
+  <b>P</b>rocedural <b>A</b>nd <b>R</b>igorous <b>A</b>ssessment using <b>MET</b>a<b>R</b>ubrics: A framework for building contamination-free scientific benchmarks for agentic LLM evaluation with deterministically generated rubrics.
+</p>
 
 <p align="center">
     <br>

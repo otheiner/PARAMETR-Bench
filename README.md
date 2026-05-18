@@ -26,7 +26,7 @@ Because tasks are generated from a fixed distribution controlled by difficulty p
 
 The repository includes several tasks inspired by landmark discoveries in particle physics and cosmology, such as invariant mass reconstruction and Cepheid variable calibration. However, any scientific process with a simulatable generating distribution can become a task — physics, mathematics, chemistry, biology, climate science, and beyond.
 
-Try the inteactive task generation online or read the detailed technical blog post about the framework: 
+Try the interactive task generation online or read the detailed technical blog post about the framework: 
 
 <p align="center">
   <a href="https://huggingface.co/spaces/otheiner/PARAMETR-Bench_demo"><img src="https://img.shields.io/badge/🤗_Try_the_demo-FFD21E?style=for-the-badge" alt="Try the demo"/></a>&nbsp;&nbsp;<a href="https://otheiner.github.io/PARAMETR-Bench-blog"><img src="https://img.shields.io/badge/📖_Read_the_post-444444?style=for-the-badge" alt="Read the blog post"/></a>

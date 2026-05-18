@@ -28,13 +28,37 @@ class Evaluator:
         Run model on task, save model_response.json + rubrics.json to dest_dir.
         Returns the final answer string. Raises on any failure — nothing is saved
         unless the model call fully succeeds.
+
+        If _partial_model_response.json exists in dest_dir, the agentic loop is
+        resumed from the saved turn with the saved conversation history and
+        session workspace restored from _partial_session/.
         """
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
         if agentic:
-            model_output, messages = self._send_to_model_agentic(task, model, max_turns)
+            partial_path = dest_dir / '_partial_model_response.json'
+            initial_messages, start_turn = None, 0
+            if partial_path.exists():
+                partial_data = json.loads(partial_path.read_text())
+                initial_messages = partial_data['messages']
+                start_turn       = partial_data['start_turn']
+                print(f"↩  Resuming agentic loop from turn {start_turn + 1}/{max_turns} (partial state found)")
+            model_output, messages = self._send_to_model_agentic(
+                task, model, max_turns, dest_dir,
+                initial_messages=initial_messages,
+                start_turn=start_turn,
+            )
         else:
             model_output, messages = self._send_to_model(task, model)
 
-        dest_dir.mkdir(parents=True, exist_ok=True)
+        # Clean up partial state on success
+        partial_path    = dest_dir / '_partial_model_response.json'
+        partial_session = dest_dir / '_partial_session'
+        if partial_path.exists():
+            partial_path.unlink()
+        if partial_session.exists():
+            shutil.rmtree(partial_session)
+
         with open(dest_dir / 'model_response.json', 'w') as f:
             json.dump({
                 'task':     task.folder.name,
@@ -187,20 +211,33 @@ class Evaluator:
     # Send to model - multiple turns for agent
     # ─────────────────────────────────────────
     def _send_to_model_agentic(self, task: Task, model: str,
-                            max_turns: int) -> str:
+                            max_turns: int, dest_dir: Path,
+                            initial_messages: list | None = None,
+                            start_turn: int = 0) -> str:
         """
         Agentic evaluation — model can write and execute Python scripts.
         Images are included in the first message and remain accessible
         throughout the conversation via the full history.
         A persistent workspace is shared across all turns so the agent
         can save and load intermediate files between tool calls.
+
+        If initial_messages / start_turn are provided the loop resumes
+        mid-conversation; the session workspace is restored from
+        dest_dir/_partial_session/ instead of being freshly populated.
         """
         # Create persistent workspace for this session
         session_dir = Path(tempfile.mkdtemp())
 
         try:
-            # Copy input files once into session workspace
-            shutil.copytree(task.input_dir, session_dir, dirs_exist_ok=True)
+            partial_session = dest_dir / '_partial_session'
+
+            if initial_messages is not None:
+                # Resuming: restore saved workspace into fresh tmpdir
+                if partial_session.exists():
+                    shutil.copytree(partial_session, session_dir, dirs_exist_ok=True)
+            else:
+                # Fresh start: copy input files once into session workspace
+                shutil.copytree(task.input_dir, session_dir, dirs_exist_ok=True)
 
             # Providers that support multimodal content in tool result messages.
             # litellm.supports_vision() only checks the model, not whether the
@@ -213,23 +250,37 @@ class Evaluator:
             vision   = provider in _VISION_TOOL_PROVIDERS and litellm.supports_vision(model=model)
             tools    = TOOLS if vision else [t for t in TOOLS if t['function']['name'] != 'view_image']
 
-            # Include input files in the first message
-            messages = [{
-                'role':    'user',
-                'content': [
-                    {'type': 'text',
-                     'text': task.get_prompt() + self.load_agentic_prompt(max_turns, vision)},
-                            *task.get_input_files(embed_data=False)
-                ]
-            }]
+            if initial_messages is not None:
+                messages = initial_messages
+            else:
+                # Include input files in the first message
+                messages = [{
+                    'role':    'user',
+                    'content': [
+                        {'type': 'text',
+                         'text': task.get_prompt() + self.load_agentic_prompt(max_turns, vision)},
+                                *task.get_input_files(embed_data=False)
+                    ]
+                }]
 
-            for turn in range(max_turns):
-                response = self._litellm_completion_with_retry(
-                    model       = model,
-                    messages    = messages,
-                    tools       = tools,
-                    temperature = 0.0
-                )
+            for turn in range(start_turn, max_turns):
+                try:
+                    response = self._litellm_completion_with_retry(
+                        model       = model,
+                        messages    = messages,
+                        tools       = tools,
+                        temperature = 0.0,
+                    )
+                except Exception:
+                    # Save partial state so the run can be resumed with --continue-run
+                    partial_path = dest_dir / '_partial_model_response.json'
+                    with open(partial_path, 'w') as f:
+                        json.dump({'start_turn': turn, 'messages': messages}, f, indent=2)
+                    if partial_session.exists():
+                        shutil.rmtree(partial_session)
+                    shutil.copytree(session_dir, partial_session)
+                    print(f"⚠  Partial state saved (turn {turn + 1}/{max_turns}) — resume with --continue-run")
+                    raise
 
                 if not response.choices:
                     raise RuntimeError(

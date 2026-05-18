@@ -32,7 +32,7 @@ class Metarubric:
     Attributes:
         key:                    - short snake_case key to identify the metarubric
         source:                 - name of the dataframe in ground_truth.json that contains the data for this metarubric
-        category:               - skill category; allowed values: "scientific reasoning" | "data manipulation" | "image handling" | "output formatting" 
+        category:               - skill category; allowed values: "scientific reasoning" | "data handling" | "image data extraction" | "output formatting" 
                                   (can be used for weighting and analysis by skill type)
         name:                   - short human readable name
         description:            - f-string with {column_name} placeholders - this gets unpacked 
@@ -260,6 +260,7 @@ class BenchmarkResults:
         seeds:         random seeds used
         git_commit:    git commit hash for reproducibility
         timestamp:     timestamp of when benchmark run started
+        partial:       whether this is a partial run (used to flag runs that have some failed tests - e.g. due to API errors)
     """
     task_results:  list[TaskResults]
     model:         str

@@ -7,22 +7,27 @@
             "SIGNAL_FRACTION": 0.5,
             "MEAN_LAMBDA_BKG_DECAY": 0.3,
             "LAYER_RADII": [0.05, 0.55],
-            "MEAN_GAMMA_SIGNAL" : 10
-
+            "MEAN_GAMMA_SIGNAL" : 10,
+            "MASS_TOLERANCE" : 1.0,
+            "WIDTH_TOLERANCE" : 1.0
         },
         "medium": {
             "N_EVENTS": 1000,
             "SIGNAL_FRACTION": 0.2,
             "MEAN_LAMBDA_BKG_DECAY": 0.1,
             "LAYER_RADII": [0.05, 0.30, 0.60],
-            "MEAN_GAMMA_SIGNAL" : 3
+            "MEAN_GAMMA_SIGNAL" : 3,
+            "MASS_TOLERANCE" : 0.5,
+            "WIDTH_TOLERANCE" : 0.5
         },
         "hard": {
             "N_EVENTS": 10000,
             "SIGNAL_FRACTION": 0.05,
             "MEAN_LAMBDA_BKG_DECAY": 0.05,
             "LAYER_RADII": [0.05, 0.15, 0.30, 0.55],
-            "MEAN_GAMMA_SIGNAL" : 1
+            "MEAN_GAMMA_SIGNAL" : 1,
+            "MASS_TOLERANCE" : 0.1,
+            "WIDTH_TOLERANCE" : 0.3
         }
     },
 

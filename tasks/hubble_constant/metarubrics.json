@@ -3,7 +3,7 @@
         {
             "key": "no_of_galaxies",
             "source": "results",
-            "category": "data manipulation",
+            "category": "data handling",
             "name": "Correct number of galaxies",
             "description": "Did the model estimate redshifts of exactly {no_of_galaxies} galaxies?",
             "weight": 5.0
@@ -11,7 +11,7 @@
         {
             "key": "z_estimation",
             "source": "analyzed_galaxies",
-            "category": "image handling",
+            "category": "image data extraction",
             "name": "Redshift estimation",
             "description": "Did the model compute that {galaxy_ID} has redshift {z}, or value strictly inside interval [{z_min} , {z_max}]?",
             "weight": 50.0

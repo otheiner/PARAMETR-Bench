@@ -20,21 +20,19 @@ Management of the company also wants to list all machines with a failure rate st
 ________________________________________
 ## Output format
 
-Structure your response exactly as follows:
-
-[final_result] 
--------DATA FOR QUALITY ASSURANCE-------
-SUPPLY_ID      MACHINE      BATCH      FREQUENCY
-[supply_ID1]  [machine]    [batch]     [frequency]
-[supply_ID2]  [machine]    [batch]     [frequency]
+Structure your response according to the following template:
+ 
+DATA FOR QUALITY ASSURANCE
+SUPPLY_ID , MACHINE , BATCH , FREQUENCY
+[supply_ID1] , [machine] , [batch] , [frequency]
+[supply_ID2] , [machine] , [batch] , [frequency]
 ...
 
-------DATA FOR MANAGEMENT------
+DATA FOR MANAGEMENT
 MACHINES(failure > 10%)
 [machine1]
 [machine2]
 ...
-[/final_result] 
 
 ________________________________________
 ## Files provided

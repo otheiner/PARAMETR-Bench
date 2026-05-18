@@ -3,7 +3,7 @@
         {
             "key": "object_values",
             "source": "dataframe name in ground_truth.json used to extract data",
-            "category": ["data manipulation", "scientific reasoning", "output formatting", "image handling"],
+            "category": ["data handling", "scientific reasoning", "output formatting", "image data extraction"],
             "name": "Name of the metarubric item 1",
             "description": "Did the model correctly identify {object_id} with value {value:.5f}?",
             "weight": 1.0
@@ -11,7 +11,7 @@
         {
             "key": "object_gains",
             "source": "dataframe name in ground_truth.json used to extract data",
-            "category": ["data manipulation", "scientific reasoning", "output formatting", "image handling"],
+            "category": ["data handling", "scientific reasoning", "output formatting", "image data extraction"],
             "name": "Name of the metarubric item 2",
             "description": "Did the model correctly identify a net gain {value:.5f} for {object_id}?",
             "weight": 2.0
@@ -19,7 +19,7 @@
         {
             "key": "final_parameter",
             "source": "dataframe name in ground_truth.json used to extract data",
-            "category": ["data manipulation", "scientific reasoning", "output formatting", "image handling"],
+            "category": ["data handling", "scientific reasoning", "output formatting", "image data extraction"],
             "name": "Name of the metarubric item 3",
             "description": "Did the model correctly estimate the final parameter {value:.5f}?",
             "weight": 1.5

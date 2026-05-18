@@ -13,14 +13,21 @@ Assume that you know that some electron-positron pairs come from the new unknown
 ________________________________________
 ## Output format
 
-Structure your response exactly as follows:
+Structure your response according to the following template:
 
-[INTERMEDIATE_RESULTS]:
-[result1]
-[result2]
+SUMMARY:
+[high level summary of your approach, including key formulas used in the task]
 
-[FINAL_RESULT]:
-[final_result]
+INTERMEDIATE_RESULTS:
+event ID , reconstructed invariant mass 
+[value] , [value]
+[value] , [value]
+[value] , [value]
+...
+
+FINAL RESULTS:
+unknown particle mass: [value] $\mathrm{GeV/c^2}$
+unknown particle decay width: [value] $\mathrm{GeV/c^2}$
 
 ________________________________________
 ## Files provided

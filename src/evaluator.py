@@ -14,6 +14,7 @@ from src.tools import TOOLS, _load_sandbox_libraries
 
 import litellm
 litellm.request_timeout = 300
+#litellm._turn_on_debug()
 
 class Evaluator:
 

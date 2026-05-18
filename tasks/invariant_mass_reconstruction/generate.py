@@ -441,6 +441,8 @@ class InvariantMassReconstruction(Task):
         M_SIG_MAX = self.get_params()['M_SIG_MAX']
         PT_SCALE = self.get_params()['PT_SCALE']
         ETA_MAX = self.get_params()['ETA_MAX']
+        MASS_TOLERANCE = self.get_params()['MASS_TOLERANCE']
+        WIDTH_TOLERANCE = self.get_params()['WIDTH_TOLERANCE']
         DAUGHTER_MASS = self.get_params()['DAUGHTER_MASS']
         B_FIELD = self.get_params()['B_FIELD']
         LAYER_RADII = self.get_params()['LAYER_RADII']
@@ -449,7 +451,17 @@ class InvariantMassReconstruction(Task):
         # ======= TASK GENERATION =======
         particle_mass = rng.uniform(M_SIG_MIN, M_SIG_MAX)
         particle_width = rng.uniform(MEAN_GAMMA_SIGNAL * 0.5, MEAN_GAMMA_SIGNAL * 1.5)
-        background_decay_lambda = rng.uniform(MEAN_LAMBDA_BKG_DECAY * 0.5, MEAN_LAMBDA_BKG_DECAY * 1.5) 
+        background_decay_lambda = rng.uniform(MEAN_LAMBDA_BKG_DECAY * 0.5, MEAN_LAMBDA_BKG_DECAY * 1.5)
+
+        # Put the values to dataframe
+        df_new_particle_properties = pd.DataFrame([{
+                                'particle_mass':      particle_mass,
+                                'particle_mass_min':  particle_mass * (1.0 - MASS_TOLERANCE),
+                                'particle_mass_max':  particle_mass * (1.0 + MASS_TOLERANCE),
+                                'particle_width':     particle_width,
+                                'particle_width_min': particle_width * (1.0 - WIDTH_TOLERANCE),
+                                'particle_width_max': particle_width * (1.0 + WIDTH_TOLERANCE),
+                            }]) 
 
         # Generate true masses for the events, and which ones are signal vs background.
         m, is_signal = self.sample_true_masses(
@@ -498,7 +510,7 @@ class InvariantMassReconstruction(Task):
         track2_energy = d2.E
 
         # Save generated data to ground truth DataFrames.
-        layer_names = [f"tracker_layer_{i}" for i in range(len(LAYER_RADII))]
+        layer_names = [f"tracker layer {i+1}" for i in range(len(LAYER_RADII))]
         df_events, df_tracker, df_ecal = self.assemble_dataframes(
             masses=m,
             is_signal=is_signal,
@@ -551,12 +563,20 @@ class InvariantMassReconstruction(Task):
         fig.savefig(self.ground_truth_dir / 'mass_spectrum.png', dpi=150)
         plt.close(fig)
 
+        # Detector geometry dataframe: one row per layer (tracker + ECAL).
+        df_detector = pd.DataFrame({
+            'layer':     layer_names + ['calorimeter'],
+            'radius':  list(LAYER_RADII) + [ECAL_RADIUS],
+        })
+
         # Save ground truth DataFrames to self.ground_truth dictionary for later use in
         # evaluation and metarubric generation.
+        self.ground_truth['detector'] = df_detector
         self.ground_truth['events'] = df_events
         self.ground_truth['tracker'] = df_tracker
         self.ground_truth['ecal'] = df_ecal
+        self.ground_truth['new_particle_properties'] = df_new_particle_properties
 
-        #TODO maybe create another datafrmes which will sample random events for large numebr of events
-        # metarubrics judging would be too long for 10000 of events - maybe better to sample max 100 
-        # random events.
+        # Sampled ground truth to reduce maximum number of rubrics
+        df_sampled = df_events if len(df_events) <= 200 else df_events.sample(n=200, random_state=self.seed)
+        self.ground_truth['events_sampled'] = df_sampled

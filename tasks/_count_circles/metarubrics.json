@@ -3,7 +3,7 @@
         {
             "key": "count_circles",
             "source": "images",
-            "category": "image handling",
+            "category": "image data extraction",
             "name": "Counted circles correctly in each image",
             "description": "Did the model correctly count {n_circles} circles in the image {filename}?",
             "weight": 2.0

@@ -563,6 +563,8 @@ class Task(ABC):
         for filepath in sorted(self.input_dir.rglob('*')):
             if not filepath.is_file():
                 continue
+            if filepath.name == '.gitignore':
+                continue
 
             relative  = filepath.relative_to(self.input_dir)
             mime_type, _ = mimetypes.guess_type(str(filepath))

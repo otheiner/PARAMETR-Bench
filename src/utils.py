@@ -11,3 +11,20 @@ def get_git_hash() -> str:
     except subprocess.CalledProcessError:
         print("⚠  git command failed — are you in a git repository?")
         return 'unknown'
+
+def is_working_tree_dirty() -> bool:
+    """Return True if there are any uncommitted changes (staged or unstaged)."""
+    try:
+        subprocess.check_call(
+            ['git', 'diff', '--quiet'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        subprocess.check_call(
+            ['git', 'diff', '--cached', '--quiet'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        return False
+    except subprocess.CalledProcessError:
+        return True
+    except FileNotFoundError:
+        return False

@@ -93,6 +93,12 @@ API failures outside your control shouldn't cost you a full re-run. Each run cre
 python run.py --continue-run run_ID
 ```
 
+The framework checks that the git commit and working tree match the state at the start of the run. If anything has changed, resuming may produce results that are not comparable to the original run. If you want to continue anyway:
+
+```bash
+python run.py --continue-run run_ID:force
+```
+
 **What gets preserved**
 
 Completed tasks are flushed to disk as they finish, so they survive any kind of failure. For the in-flight sequence (mid-agentic loop, or when judge fails), the framework snapshots state on caught failures (API errors, timeouts, exceptions) and can resume from the exact turn where it failed — both the LLM and the Docker sandbox are stateless, so replaying the message history and remounting the working directory fully reconstructs the run. A hard kill (Ctrl-C, crash, power loss) still preserves all completed sequences, but the in-flight one restarts from turn zero.

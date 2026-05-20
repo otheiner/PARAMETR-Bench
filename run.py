@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from src.task import Task, TaskResults, BenchmarkResults
 from src.evaluator import Evaluator
-from src.utils import get_git_hash
+from src.utils import get_git_hash, is_working_tree_dirty
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -193,15 +193,21 @@ def main():
             sys.exit(1)
         with open(run_dir / 'run_params.json') as f:
             params = json.load(f)
-        if get_git_hash() != params.get('git_commit', ''):
+        hash_changed = get_git_hash() != params.get('git_commit', '')
+        dirty        = is_working_tree_dirty()
+        if hash_changed or dirty:
             if force:
-                print(f"⚠  Repo has changed since run '{run_id}' was started — continuing anyway.")
+                print(f"⚠  Repo state differs since run '{run_id}' was started — continuing anyway.")
                 print(f"   Results may not be comparable to the original run.")
             else:
-                print(f"✗ Repo has changed since run '{run_id}' was started.")
-                print(f"  Checkout the original commit before continuing:")
-                print(f"    git checkout {params.get('git_commit')}")
-                print(f"  Or skip this check (results may differ):")
+                if hash_changed:
+                    print(f"✗ Repo commit has changed since run '{run_id}' was started.")
+                    print(f"  Checkout the original commit before continuing:")
+                    print(f"    git checkout {params.get('git_commit')}")
+                if dirty:
+                    print(f"✗ Working tree has uncommitted changes.")
+                    print(f"  Commit or stash your changes before continuing.")
+                print(f"  Or skip these checks (results may differ):")
                 print(f"    python run.py --continue-run {run_id}:force")
                 sys.exit(1)
         model      = params['model']

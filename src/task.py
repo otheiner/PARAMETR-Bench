@@ -373,6 +373,8 @@ class BenchmarkResults:
         filename = '_partial-benchmark_results.json' if self.partial else 'benchmark_results.json'
         filepath = run_dir / filename
 
+        if not self.partial:
+            (run_dir / '_partial-benchmark_results.json').unlink(missing_ok=True)
         with open(filepath, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
 

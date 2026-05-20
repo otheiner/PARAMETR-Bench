@@ -51,14 +51,6 @@ class Evaluator:
         else:
             model_output, messages = self._send_to_model(task, model)
 
-        # Clean up partial state on success
-        partial_path    = dest_dir / '_partial_model_response.json'
-        partial_session = dest_dir / '_partial_session'
-        if partial_path.exists():
-            partial_path.unlink()
-        if partial_session.exists():
-            shutil.rmtree(partial_session)
-
         with open(dest_dir / 'model_response.json', 'w') as f:
             json.dump({
                 'task':     task.folder.name,

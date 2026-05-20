@@ -50,8 +50,11 @@ def parse_args():
                         help    = 'Maximum agentic turns per evaluation (default: 10).')
     parser.add_argument('--continue-run',  type = str,
                         default = None,
-                        metavar = 'RUN_ID',
-                        help    = 'Continue an existing run by its 6-character ID.')
+                        metavar = 'RUN_ID[:force]',
+                        help    = 'Continue an existing run by its 6-character ID. '
+                                  'Append :force to skip the git commit check '
+                                  '(e.g. --continue-run abc123:force). '
+                                  'Results may not be comparable to the original run.')
 
     return parser.parse_args()
 
@@ -181,7 +184,9 @@ def main():
 
     # ── Determine run folder and parameters ───────────────────
     if args.continue_run:
-        run_id  = args.continue_run
+        raw     = args.continue_run
+        force   = raw.endswith(':force')
+        run_id  = raw[:6]
         run_dir = find_run_dir(results_dir, run_id)
         if not run_dir.exists():
             print(f"✗ Run '{run_id}' not found in {results_dir}/")
@@ -189,10 +194,16 @@ def main():
         with open(run_dir / 'run_params.json') as f:
             params = json.load(f)
         if get_git_hash() != params.get('git_commit', ''):
-            print(f"✗ Repo has changed since run '{run_id}' was started.")
-            print(f"  Checkout the original commit before continuing:")
-            print(f"    git checkout {params.get('git_commit')}")
-            sys.exit(1)
+            if force:
+                print(f"⚠  Repo has changed since run '{run_id}' was started — continuing anyway.")
+                print(f"   Results may not be comparable to the original run.")
+            else:
+                print(f"✗ Repo has changed since run '{run_id}' was started.")
+                print(f"  Checkout the original commit before continuing:")
+                print(f"    git checkout {params.get('git_commit')}")
+                print(f"  Or skip this check (results may differ):")
+                print(f"    python run.py --continue-run {run_id}:force")
+                sys.exit(1)
         model      = params['model']
         judge      = params['judge']
         difficulty = params['difficulty']
@@ -379,6 +390,15 @@ def main():
                 except Exception as e:
                     print(f"✗ Judge failed [{task_name} / seed {seed} / {model}]: {e}")
                     failures.append({'step': 'judge', 'task': task_name, 'seed': seed, 'model': model, 'reason': str(e)})
+
+            # ── Clean up partial state if task completed fully ────
+            if task_results_path.exists():
+                _p  = dest_dir / '_partial_model_response.json'
+                _ps = dest_dir / '_partial_session'
+                if _p.exists():
+                    _p.unlink()
+                if _ps.exists():
+                    shutil.rmtree(_ps)
 
     # ── Failure summary ───────────────────────────────────────
     if failures:

@@ -202,13 +202,13 @@ def main():
             else:
                 if hash_changed:
                     print(f"✗ Repo commit has changed since run '{run_id}' was started.")
-                    print(f"  Checkout the original commit before continuing:")
-                    print(f"    git checkout {params.get('git_commit')}")
-                if dirty:
+                    print(f"  Checkout the original commit before continuing and then call this command again:")
+                    print(f"        git checkout {params.get('git_commit')} && python run.py --continue-run {run_id}")
+                elif dirty:
                     print(f"✗ Working tree has uncommitted changes.")
                     print(f"  Commit or stash your changes before continuing.")
                 print(f"  Or skip these checks (results may differ):")
-                print(f"    python run.py --continue-run {run_id}:force")
+                print(f"        python run.py --continue-run {run_id}:force")
                 sys.exit(1)
         model      = params['model']
         judge      = params['judge']

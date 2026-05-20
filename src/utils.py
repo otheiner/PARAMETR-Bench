@@ -16,11 +16,7 @@ def is_working_tree_dirty() -> bool:
     """Return True if there are any uncommitted changes (staged or unstaged)."""
     try:
         subprocess.check_call(
-            ['git', 'diff', '--quiet'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        subprocess.check_call(
-            ['git', 'diff', '--cached', '--quiet'],
+            ['git', 'diff', 'HEAD', '--quiet'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
         return False

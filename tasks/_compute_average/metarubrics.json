@@ -6,7 +6,7 @@
             "category": "data handling",
             "name": "Found the correct numbers.",
             "description": "Did the model correctly find the number {input_number}?",
-            "weight": 5.0
+            "weight": 2.0
         },
         {
             "key": "computed_average",
@@ -14,7 +14,7 @@
             "category": "scientific reasoning",
             "name": "Computed correctly the average.",
             "description": "Did the model correctly compute the average {average:.2f}, or value that matches the average when both numbers are rounded to two decimal digits?",
-            "weight": 2.0
+            "weight": 10.0
         },
         {
             "key": "non_empty_answer",

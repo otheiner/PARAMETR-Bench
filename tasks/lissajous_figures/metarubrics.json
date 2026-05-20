@@ -6,7 +6,7 @@
             "category": "data handling",
             "name": "Listed faulty supplies.",
             "description": "Did the model list supply {supply_ID} as faulty in DATA FOR QUALITY ASSURANCE  section?",
-            "weight": 20.0
+            "weight": 2.0
         },
         {
             "key": "notfaulty_supplies",
@@ -14,7 +14,7 @@
             "category": "data handling",
             "name": "Skipped not faulty supplies.",
             "description": "Did the model not include supply {supply_ID} in the list of faulty supplies in DATA FOR QUALITY ASSURANCE  section?",
-            "weight": 20.0
+            "weight": 2.0
         },
         {
             "key": "supplies_frequency",
@@ -22,7 +22,7 @@
             "category": "image data extraction",
             "name": "Computed frequency of faulty supply.",
             "description": "Did the model list that supply {supply_ID} has frequency {frequency} Hz in DATA FOR QUALITY ASSURANCE  section?",
-            "weight": 20.0
+            "weight": 8.0
         },
         {
             "key": "supply_batch",
@@ -30,7 +30,7 @@
             "category": "data handling",
             "name": "Listed batch of supply.",
             "description": "Did the model list that supply {supply_ID} was manufactured in batch {batch} in DATA FOR QUALITY ASSURANCE  section?",
-            "weight": 2.0
+            "weight": 4.0
         },
         {
             "key": "supply_manufacturing_machine",
@@ -46,7 +46,7 @@
             "category": "data handling",
             "name": "Identified faulty machines.",
             "description": "Did the model list machine {machine} as faulty in MACHINES(failure > 10%)  section?",
-            "weight": 30.0
+            "weight": 4.0
         },
         {
             "key": "not_faulty_machines",
@@ -54,7 +54,7 @@
             "category": "data handling",
             "name": "Skipped not faulty machines.",
             "description": "Did the model not include machine {machine} in the MACHINES(failure > 10%) section??",
-            "weight": 30.0
+            "weight": 4.0
         }
     ]
 }

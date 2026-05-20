@@ -18,9 +18,9 @@ The final output is used to grade your answer.
 Structure your response according to the following template:
 
 SUMMARY:
-[high level summary of your approach, including key formulas used in the task and used constants (such as particle masses or detector parameters)]
+[high level summary of your approach, including key formulas used in the task and used constants. Also list masses of particles entering the calculations and detector parameters, such as radii of tracking layers and calorimeter.]
 
-INTERMEDIATE RESULTS PER EVENT:
+INTERMEDIATE RESULTS FOR EVERY EVENT:
 event ID , reconstructed invariant mass 
 [value] , [value]
 [value] , [value]

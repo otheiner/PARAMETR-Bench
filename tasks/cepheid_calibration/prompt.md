@@ -21,6 +21,9 @@ The final output is used to grade your answer.
 
 Structure your response according to the following template:
 
+SUMMARY:
+[high level summary of your approach, including key formulas and methods used to solve the task]
+
 ESTIMATED REDSHIFTS
 CEPHEID_ID , REDSHIFT
 [ID1] , [z1]

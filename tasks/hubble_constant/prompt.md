@@ -17,7 +17,7 @@ The final output is used to grade your answer.
 Structure your response according to the following template:
 
 SUMMARY:
-[high level summary of your approach, including key formulas used in the task]
+[high level summary of your approach, including key formulas and methods used to solve the task]
 
 REDSHIFTS OF GALAXIES USED IN THE ANALYSIS:
 [GID...]    [redshift value]

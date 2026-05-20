@@ -6,7 +6,7 @@
             "category": "data handling",
             "name": "Listed Cepheids with data",
             "description": "Did the model list Cepheid {cepheid_ID} in the list of Cepheids with measured redshift?",
-            "weight": 1.0
+            "weight": 2.0
         },
         {
             "key": "cepheids_without_data",
@@ -14,7 +14,7 @@
             "category": "data handling",
             "name": "Did not list Cepheids without data",
             "description": "Did the model not include Cepheid {cepheid_ID} in the list with measured redshift?",
-            "weight": 1.0
+            "weight": 2.0
         },
         {
             "key": "estimated_redshifts",
@@ -22,7 +22,15 @@
             "category": "image data extraction",
             "name": "Estimated redshifts",
             "description": "Did the model estimate that galaxy containing Cepheid variable {cepheid_ID} has redshift {z}, or stated value strictly inside the interval {z_allowed_interval}?",
-            "weight": 1.0
+            "weight": 8.0
+        },
+        {
+            "key": "fitted_function",
+            "source": "results",
+            "category": "scientific reasoning",
+            "name": "Fitted function form",
+            "description": "Did the model fit into a data linear function with offset and the slope as free parameters?",
+            "weight": 3.0
         },
         {
             "key": "estimated_a",
@@ -30,7 +38,7 @@
             "category": "scientific reasoning",
             "name": "Estimated 'a'",
             "description": "Did the model estimate parameter 'a' as {a}, or value strictly inside interval {a_allowed_interval}?",
-            "weight": 1.0
+            "weight": 10.0
         },
         {
             "key": "estimated_a_sigma",
@@ -38,7 +46,7 @@
             "category": "scientific reasoning",
             "name": "Estimated 'sigma_a'",
             "description": "Did the model estimate uncertainty of parameter 'a' as {a_sigma}, or value strictly inside interval {a_sigma_allowed_interval}?",
-            "weight": 1.0
+            "weight": 8.0
         },
         {
             "key": "estimated_b",
@@ -54,7 +62,7 @@
             "category": "scientific reasoning",
             "name": "Estimated 'sigma_b'",
             "description": "Did the model estimate uncertainty of parameter 'b' as {b_sigma}, or value strictly inside interval {b_sigma_allowed_interval}?",
-            "weight": 1.0
+            "weight": 8.0
         }
     ]
 }

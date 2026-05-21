@@ -145,19 +145,12 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Load agentic prompt
     # ─────────────────────────────────────────
-    def load_agentic_prompt(self, max_turns: int, vision: bool = True) -> str:
+    def load_agentic_prompt(self, max_turns: int) -> str:
         """Load agentic prompt addition and fill in available libraries."""
         template = (Path(__file__).parent / 'agentic_prompt.md').read_text()
-        view_image_note = ", and `view_image` to inspect image files" if vision else ""
-        view_image_tool = (
-            "- **view_image** — render an image file into your context so you can inspect it visually\n"
-            if vision else ""
-        )
         return template.format(
-            libraries       = _load_sandbox_libraries(),
-            max_turns       = max_turns,
-            view_image_tool = view_image_tool,
-            view_image_note = view_image_note,
+            libraries = _load_sandbox_libraries(),
+            max_turns = max_turns,
         )
 
     # ─────────────────────────────────────────
@@ -232,16 +225,6 @@ class Evaluator:
                 shutil.copytree(task.input_dir, session_dir, dirs_exist_ok=True)
 
             # Providers that support multimodal content in tool result messages.
-            # litellm.supports_vision() only checks the model, not whether the
-            # provider accepts image blocks in tool results — Groq e.g. does not.
-            _VISION_TOOL_PROVIDERS = {'anthropic', 'openai', 'azure', 'gemini', 'vertex_ai', 'bedrock', 'ollama'}
-            try:
-                _, provider, _, _ = litellm.get_llm_provider(model)
-            except Exception:
-                provider = ''
-            vision   = provider in _VISION_TOOL_PROVIDERS and litellm.supports_vision(model=model)
-            tools    = TOOLS if vision else [t for t in TOOLS if t['function']['name'] != 'view_image']
-
             if initial_messages is not None:
                 messages = initial_messages
             else:
@@ -250,7 +233,7 @@ class Evaluator:
                     'role':    'user',
                     'content': [
                         {'type': 'text',
-                         'text': task.get_prompt() + self.load_agentic_prompt(max_turns, vision)},
+                         'text': task.get_prompt() + self.load_agentic_prompt(max_turns)},
                                 *task.get_input_files(embed_data=False)
                     ]
                 }]
@@ -260,7 +243,7 @@ class Evaluator:
                     response = self._litellm_completion_with_retry(
                         model       = model,
                         messages    = messages,
-                        tools       = tools,
+                        tools       = TOOLS,
                         temperature = 0.0,
                     )
                 except Exception:

@@ -260,7 +260,7 @@ def main():
             print(f"✓ New run: {run_id}  ({run_dir})")
             if is_working_tree_dirty():
                 print(f"⚠  Working tree has uncommitted changes — results may not be reproducible.")
-                print(f"   Commit your changes first, or continue anyway. Do you want to continue? [Y/n] ", end='', flush=True)
+                print(f"   Commit your changes first, or continue anyway. Do you want to continue? [y/n] ", end='', flush=True)
                 if input().strip().lower() == 'n':
                     print("Aborting. Commit or stash your changes and re-run.")
                     sys.exit(0)

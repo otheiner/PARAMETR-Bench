@@ -98,8 +98,17 @@ class Evaluator:
                 ],
             }, f, indent=2)
 
-        with open(dest_dir / 'judge_response.json', 'w') as f:
-            json.dump({'metarubrics': raw_data}, f, indent=2)
+        judge_clean = judge.replace('/', '-').replace(':', '-')
+        base = dest_dir / f'judge_response_{judge_clean}.json'
+        if base.exists():
+            idx = 1
+            while (dest_dir / f'judge_response_{judge_clean}_{idx}.json').exists():
+                idx += 1
+            judge_resp_path = dest_dir / f'judge_response_{judge_clean}_{idx}.json'
+        else:
+            judge_resp_path = base
+        with open(judge_resp_path, 'w') as f:
+            json.dump({'judge': judge, 'metarubrics': raw_data}, f, indent=2)
 
         print(f"✓ Task results saved: {dest_dir / 'task_results.json'}")
         return mr_results

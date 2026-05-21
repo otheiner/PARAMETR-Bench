@@ -55,6 +55,11 @@ def parse_args():
                                   'Append :force to skip the git commit check '
                                   '(e.g. --continue-run abc123:force). '
                                   'Results may not be comparable to the original run.')
+    parser.add_argument('--regrade',       type = str,
+                        default = None,
+                        metavar = 'RUN_ID',
+                        help    = 'Re-run the judge on all completed model responses in an '
+                                  'existing run. Use --judge to specify a different judge model.')
 
     return parser.parse_args()
 
@@ -220,6 +225,22 @@ def main():
         max_turns  = params['max_turns']
         task_names = params['tasks']
         print(f"✓ Continuing run: {run_id}  ({run_dir})")
+    elif args.regrade:
+        run_id  = args.regrade[:6]
+        run_dir = find_run_dir(results_dir, run_id)
+        if not run_dir.exists():
+            print(f"✗ Run '{run_id}' not found in {results_dir}/")
+            sys.exit(1)
+        with open(run_dir / 'run_params.json') as f:
+            params = json.load(f)
+        model      = params['model']
+        judge      = args.judge if '--judge' in sys.argv else params['judge']
+        difficulty = params['difficulty']
+        seeds      = params['seeds']
+        agentic    = params['agentic']
+        max_turns  = params['max_turns']
+        task_names = params['tasks']
+        print(f"✓ Regrading run: {run_id}  ({run_dir})  judge: {judge}")
     else:
         run_id  = generate_run_id(results_dir)
         timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -302,10 +323,10 @@ def main():
             def _dest(m):
                 return run_dir / m.replace('/', '-').replace(':', '-') / task_name / str(seed)
 
-            skip_generation = not args.validate_only and (
+            skip_generation = args.regrade or (not args.validate_only and (
                 (_dest(model) / 'model_response.json').exists() and
                 (_dest(model) / 'rubrics.json').exists()
-            )
+            ))
 
             if skip_generation:
                 print(f"↩  Skipping task generation — model already produced response for seed {seed} and rubrics exist")
@@ -369,6 +390,11 @@ def main():
             rubrics_path      = dest_dir / 'rubrics.json'
             task_results_path = dest_dir / 'task_results.json'
 
+            # ── Regrade: skip seeds without model response ────
+            if args.regrade and not (model_resp_path.exists() and rubrics_path.exists()):
+                print(f"↩  No model response or rubrics — skipping")
+                continue
+
             # ── Model step ───────────────────────────────────
             if model_resp_path.exists() and rubrics_path.exists():
                 print(f"↩  Skipping model call — response exists")
@@ -389,7 +415,7 @@ def main():
                     continue
 
             # ── Judge step ───────────────────────────────────
-            if task_results_path.exists():
+            if task_results_path.exists() and not args.regrade:
                 print(f"↩  Skipping judge call — response exists")
             else:
                 try:

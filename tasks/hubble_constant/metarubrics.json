@@ -1,12 +1,28 @@
 {
     "metarubrics": [
         {
+            "key": "summary",
+            "source": "none",
+            "category": "instructions following",
+            "name": "Included summary section",
+            "description": "Did the model include SUMMARY section in its response?",
+            "weight": 1.0
+        },
+        {
             "key": "no_of_galaxies",
             "source": "results",
             "category": "data handling",
             "name": "Correct number of galaxies",
             "description": "Did the model estimate redshifts of exactly {no_of_galaxies} galaxies?",
             "weight": 2.0
+        },
+        {
+            "key": "z_estimation_section",
+            "source": "none",
+            "category": "instructions following",
+            "name": "Listed section measured redshifts",
+            "description": "Did the model include REDSHIFTS OF GALAXIES USED IN THE ANALYSIS section in its response?",
+            "weight": 1.0
         },
         {
             "key": "z_estimation",
@@ -31,6 +47,14 @@
             "name": "Fitted function - zero offset",
             "description": "Did the model state that the linear function it fitted has zero offset, or claimed semantically equivalent information?",
             "weight": 4.0
+        },
+        {
+            "key": "hubble_section",
+            "source": "none",
+            "category": "instructions following",
+            "name": "Included Hubble constant section",
+            "description": "Did the model include HUBBLE CONSTANT section in its response?",
+            "weight": 1.0
         },
         {
             "key": "h_estimation",

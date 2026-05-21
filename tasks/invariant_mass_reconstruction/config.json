@@ -3,7 +3,7 @@
 
     "difficulties": {
         "easy": {
-            "N_EVENTS": 200,
+            "N_EVENTS": 400,
             "SIGNAL_FRACTION": 0.5,
             "MEAN_LAMBDA_BKG_DECAY": 0.3,
             "LAYER_RADII": [0.05, 0.55],

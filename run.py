@@ -336,6 +336,10 @@ def main():
                 task.populate_metarubrics()
                 task.validate_metarubrics()
                 task.generate_rubrics()
+                if not args.validate_only:
+                    rubrics_dest = _dest(model)
+                    rubrics_dest.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(task.ground_truth_dir / 'rubrics.json', rubrics_dest / 'rubrics.json')
 
             # ── Validate-only path ────────────────────────────
             if args.validate_only:

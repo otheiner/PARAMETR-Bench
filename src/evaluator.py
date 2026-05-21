@@ -59,7 +59,6 @@ class Evaluator:
                 'messages': messages,
             }, f, indent=2)
 
-        shutil.copy(task.ground_truth_dir / 'rubrics.json', dest_dir / 'rubrics.json')
         print(f"✓ Model response saved: {dest_dir / 'model_response.json'}")
         return model_output
 

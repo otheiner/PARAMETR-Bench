@@ -20,7 +20,7 @@
             "key": "fit_function",
             "source": "none",
             "category": "scientific reasoning",
-            "name": "Fitted function shape",
+            "name": "Fitted function - linear",
             "description": "Did the model state that it fitted a linear function?",
             "weight": 5.0
         },
@@ -28,7 +28,7 @@
             "key": "fit_function_offse",
             "source": "none",
             "category": "scientific reasoning",
-            "name": "Fitted function offset",
+            "name": "Fitted function - zero offset",
             "description": "Did the model state that the linear function it fitted has zero offset, or claimed semantically equivalent information?",
             "weight": 4.0
         },

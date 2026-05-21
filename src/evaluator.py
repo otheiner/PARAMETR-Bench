@@ -76,27 +76,6 @@ class Evaluator:
 
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        with open(dest_dir / 'task_results.json', 'w') as f:
-            json.dump({
-                'task':       task.folder.name,
-                'model':      model,
-                'judge':      judge,
-                'seed':       task.seed,
-                'difficulty': task.difficulty,
-                'git_commit': get_git_hash(),
-                'timestamp':  datetime.now().isoformat(),
-                'metarubrics': [
-                    {
-                        'name':     mr.metarubric_name,
-                        'category': mr.category,
-                        'total':    mr.total,
-                        'passed':   mr.passed,
-                        'weight':   mr.weight,
-                    }
-                    for mr in mr_results
-                ],
-            }, f, indent=2)
-
         judge_clean = judge.replace('/', '-').replace(':', '-')
         base = dest_dir / f'judge_response_{judge_clean}.json'
         if base.exists():
@@ -109,7 +88,7 @@ class Evaluator:
         with open(judge_resp_path, 'w') as f:
             json.dump({'judge': judge, 'metarubrics': raw_data}, f, indent=2)
 
-        print(f"✓ Task results saved: {dest_dir / 'task_results.json'}")
+        print(f"✓ Judge response saved: {judge_resp_path}")
         return mr_results
 
     # ─────────────────────────────────────────

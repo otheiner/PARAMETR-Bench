@@ -15,7 +15,7 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-from src.task import Task, TaskResults, BenchmarkResults
+from src.task import Task, TaskResults, MetarubricResult, BenchmarkResults
 from src.evaluator import Evaluator
 from src.utils import get_git_hash, is_working_tree_dirty
 
@@ -124,24 +124,68 @@ def discover_tasks(tasks_dir='tasks') -> dict:
     return discovered
 
 
+def _latest_judge_response(dest_dir: Path, judge_clean: str) -> Path | None:
+    if not dest_dir.exists():
+        return None
+    prefix = f'judge_response_{judge_clean}'
+    matches = [p for p in dest_dir.iterdir()
+               if p.name == f'{prefix}.json' or
+                  (p.name.startswith(f'{prefix}_') and p.name.endswith('.json'))]
+    return max(matches, key=lambda p: p.stat().st_mtime) if matches else None
+
+
+def _task_results_from_judge_response(dest_dir: Path, task_name: str, seed: int,
+                                       model: str, judge_clean: str) -> TaskResults | None:
+    jr_path = _latest_judge_response(dest_dir, judge_clean)
+    if jr_path is None:
+        return None
+    rubrics_path = dest_dir / 'rubrics.json'
+    if not rubrics_path.exists():
+        return None
+    with open(jr_path) as f:
+        jr = json.load(f)
+    with open(rubrics_path) as f:
+        rb = json.load(f)
+    weight_by_name = {mr['name']: mr['weight'] for mr in rb['metarubrics']}
+    return TaskResults(
+        task_name          = task_name,
+        seed               = seed,
+        difficulty         = rb['difficulty'],
+        model              = model,
+        judge              = jr['judge'],
+        git_commit         = '',
+        timestamp          = '',
+        metarubric_results = [
+            MetarubricResult(
+                metarubric_name = mr['name'],
+                category        = mr['category'],
+                total           = len(mr['rubrics']),
+                passed          = sum(1 for r in mr['rubrics'] if r['verdict'] == 'YES'),
+                weight          = weight_by_name[mr['name']],
+            )
+            for mr in jr['metarubrics']
+        ],
+    )
+
+
 def _aggregate_results(run_dir: Path, model: str, judge: str,
                         difficulty: str, seeds: list[int],
                         task_names: list[str],
                         failures: list[dict]) -> BenchmarkResults:
-    """Load all task_results.json files and produce a BenchmarkResults."""
+    """Reconstruct BenchmarkResults from judge_response + rubrics files."""
     task_results = []
     incomplete   = []
 
     failure_index = {(f['task'], f['seed']): f for f in failures}
 
     model_clean = model.replace('/', '-').replace(':', '-')
+    judge_clean = judge.replace('/', '-').replace(':', '-')
     for task_name in task_names:
         for seed in seeds:
-            dest_dir          = run_dir / model_clean / task_name / str(seed)
-            task_results_path = dest_dir / 'task_results.json'
-            if task_results_path.exists():
-                with open(task_results_path) as f:
-                    task_results.append(TaskResults.from_dict(json.load(f)))
+            dest_dir = run_dir / model_clean / task_name / str(seed)
+            tr = _task_results_from_judge_response(dest_dir, task_name, seed, model, judge_clean)
+            if tr is not None:
+                task_results.append(tr)
             else:
                 entry = {'task': task_name, 'seed': seed}
                 if (task_name, seed) in failure_index:
@@ -390,9 +434,9 @@ def main():
             model_clean = model.replace('/', '-').replace(':', '-')
             dest_dir    = run_dir / model_clean / task_name / str(seed)
 
-            model_resp_path   = dest_dir / 'model_response.json'
-            rubrics_path      = dest_dir / 'rubrics.json'
-            task_results_path = dest_dir / 'task_results.json'
+            model_resp_path = dest_dir / 'model_response.json'
+            rubrics_path    = dest_dir / 'rubrics.json'
+            judge_clean     = judge.replace('/', '-').replace(':', '-')
 
             # ── Regrade: skip seeds without model response ────
             if args.regrade and not (model_resp_path.exists() and rubrics_path.exists()):
@@ -419,7 +463,7 @@ def main():
                     continue
 
             # ── Judge step ───────────────────────────────────
-            if task_results_path.exists() and not args.regrade:
+            if _latest_judge_response(dest_dir, judge_clean) is not None and not args.regrade:
                 print(f"↩  Skipping judge call — response exists")
             else:
                 try:
@@ -436,7 +480,7 @@ def main():
                     failures.append({'step': 'judge', 'task': task_name, 'seed': seed, 'model': model, 'reason': str(e)})
 
             # ── Clean up partial state if task completed fully ────
-            if task_results_path.exists():
+            if _latest_judge_response(dest_dir, judge_clean) is not None:
                 _p  = dest_dir / '_partial_model_response.json'
                 _ps = dest_dir / '_partial_session'
                 if _p.exists():

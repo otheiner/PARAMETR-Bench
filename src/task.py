@@ -32,7 +32,7 @@ class Metarubric:
     Attributes:
         key:                    - short snake_case key to identify the metarubric
         source:                 - name of the dataframe in ground_truth.json that contains the data for this metarubric
-        category:               - skill category; allowed values: "scientific reasoning" | "data handling" | "image data extraction" | "output formatting" 
+        category:               - skill category; allowed values: "scientific reasoning" | "data handling" | "image data extraction" | "instructions following" 
                                   (can be used for weighting and analysis by skill type)
         name:                   - short human readable name
         description:            - f-string with {column_name} placeholders - this gets unpacked 

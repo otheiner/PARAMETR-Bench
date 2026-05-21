@@ -19,7 +19,7 @@
         {
             "key": "non_empty_answer",
             "source": "none",
-            "category": "output formatting",
+            "category": "instructions following",
             "name": "Returned answer.",
             "description": "Did the model return non-empty answer?",
             "weight": 1.0

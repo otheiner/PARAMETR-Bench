@@ -11,7 +11,7 @@
         {
             "key": "per-event_mass_listing",
             "source": "none",
-            "category": "output formatting",
+            "category": "instructions following",
             "name": "Per-event mass listing",
             "description": "Did the model list the invariant masses of the parent particle in INTERMEDIATE RESULTS PER EVENT section?",
             "weight": 1.0
@@ -27,7 +27,7 @@
         {
             "key": "final_result_mass",
             "source": "none",
-            "category": "output formatting",
+            "category": "instructions following",
             "name": "Final result existence - mass",
             "description": "Did the model state the mass of the unknown particle in the FINAL RESULTS section?",
             "weight": 1.0
@@ -43,7 +43,7 @@
         {
             "key": "final_result_width",
             "source": "none",
-            "category": "output formatting",
+            "category": "instructions following",
             "name": "Final result existence - decay width",
             "description": "Did the model state the decay width of the unknown particle in the FINAL RESULTS section?",
             "weight": 1.0
@@ -59,7 +59,7 @@
         {
             "key": "analysis-summary",
             "source": "none",
-            "category": "output formatting",
+            "category": "instructions following",
             "name": "Analysis summary",
             "description": "Did the model provide a summary of the invariant mass reconstructions in the SUMMARY section?",
             "weight": 1.0

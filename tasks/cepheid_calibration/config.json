@@ -3,7 +3,7 @@
 
     "difficulties": {
         "easy": {
-            "N_GALAXIES" : 20,
+            "N_GALAXIES" : 10,
             "CEPHEID_GENERATE_PROBABILITY" : 1,
             "SPECTRUM_GENERATE_PROBABILITY" : 0.5,
             "READING_PRECISION" : 1 ,

@@ -3,7 +3,7 @@
 
     "difficulties": {
         "easy": {
-            "N_GALAXIES": 10,
+            "N_GALAXIES": 5,
             "CEPHEID_GENERATE_PROBABILITY": 1,
             "GALAXY_GENERATE_PROBABILITY": 1,
             "Z_TOLERANCE_BAND" : 0.0012,

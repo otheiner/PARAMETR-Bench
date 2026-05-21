@@ -1,6 +1,14 @@
 {
     "metarubrics": [
         {
+            "key": "analysis-summary",
+            "source": "none",
+            "category": "instructions following",
+            "name": "Analysis summary",
+            "description": "Did the model provide a summary of the invariant mass reconstructions in the SUMMARY section?",
+            "weight": 1.0
+        },
+        {
             "key": "detector_dimensions",
             "source": "detector",
             "category": "image data extraction",
@@ -55,14 +63,6 @@
             "name": "Decay width$",
             "description": "Did the model estimate the decay width of new particle as {particle_width:.2f} GeV/c^2, or value in range [{particle_width_min:.2f}, {particle_width_max:.2f}] GeV/c^2?",
             "weight": 10.0
-        },
-        {
-            "key": "analysis-summary",
-            "source": "none",
-            "category": "instructions following",
-            "name": "Analysis summary",
-            "description": "Did the model provide a summary of the invariant mass reconstructions in the SUMMARY section?",
-            "weight": 1.0
         }
     ]
 }

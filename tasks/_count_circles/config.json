@@ -3,8 +3,8 @@
 
   "difficulties": {
     "easy":   {"N_FILES": 2, "N_CIRCLES": 3},
-    "medium": {"N_FILES": 4, "N_CIRCLES": 10},
-    "hard":   {"N_FILES": 10, "N_CIRCLES": 30}
+    "medium": {"N_FILES": 10, "N_CIRCLES": 10},
+    "hard":   {"N_FILES": 30, "N_CIRCLES": 30}
   },
   "fixed_parameters": {}
 }

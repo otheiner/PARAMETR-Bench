@@ -149,13 +149,15 @@ def _aggregate_results(run_dir: Path, model: str, judge: str,
                 incomplete.append(entry)
 
     is_partial = bool(incomplete)
+    incomplete_path = run_dir / 'incomplete_tasks.json'
     if incomplete:
-        incomplete_path = run_dir / 'incomplete_tasks.json'
         with open(incomplete_path, 'w') as f:
             json.dump({'incomplete': incomplete}, f, indent=2)
         run_id = run_dir.name.split('_')[0]
         print(f"\n⚠  {len(incomplete)} task(s) incomplete — retry with:\n"
               f"   python run.py --continue-run {run_id}")
+    else:
+        incomplete_path.unlink(missing_ok=True)
 
     return BenchmarkResults(
         task_results = task_results,

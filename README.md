@@ -13,7 +13,7 @@
     <br>
   <img src="https://github.com/user-attachments/assets/a20e775e-8a33-4f3d-b4d3-8f16318c9ec3" width="900" title="Preview of some input and ground-truth reference files generated procedurally.">
     <br><br>
-      <i> Figure: Preview of a few input files from tasks in PARAMETR-Bench generated procedurally.</i>
+      <i> Figure: Preview of a few input and ground truth files from tasks in the PARAMETR-Bench generated procedurally.</i>
 </p>
 
 # What is this?

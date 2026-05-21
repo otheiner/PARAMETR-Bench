@@ -10,7 +10,7 @@
             "MEAN_GAMMA_SIGNAL" : 10,
             "MASS_TOLERANCE" : 0.02,
             "WIDTH_TOLERANCE" : 1.0,
-            "PER-EVENT_MASS_TOLERANCE" : 0.1
+            "PER-EVENT_MASS_TOLERANCE" : 0.01
         },
         "medium": {
             "N_EVENTS": 1000,
@@ -20,7 +20,7 @@
             "MEAN_GAMMA_SIGNAL" : 3,
             "MASS_TOLERANCE" : 0.01,
             "WIDTH_TOLERANCE" : 0.5,
-            "PER-EVENT_MASS_TOLERANCE" : 0.05
+            "PER-EVENT_MASS_TOLERANCE" : 0.0025
         },
         "hard": {
             "N_EVENTS": 10000,

@@ -258,6 +258,12 @@ def main():
             with open(run_dir / 'run_params.json', 'w') as f:
                 json.dump(run_params, f, indent=2)
             print(f"✓ New run: {run_id}  ({run_dir})")
+            if is_working_tree_dirty():
+                print(f"⚠  Working tree has uncommitted changes — results may not be reproducible.")
+                print(f"   Commit your changes first, or continue anyway. [Y/n] ", end='', flush=True)
+                if input().strip().lower() == 'n':
+                    print("Aborting. Commit or stash your changes and re-run.")
+                    sys.exit(0)
 
     if not args.validate_only:
         check_ollama_if_needed(model, judge)

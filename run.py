@@ -462,7 +462,7 @@ def main():
             task_names = task_names,
             failures   = failures,
         )
-        benchmark.save(run_dir)
+        benchmark.save(run_dir, judge=judge)
         if not failures:
             print(f"\n{'=' * 50}")
             print("BENCHMARK RESULTS")

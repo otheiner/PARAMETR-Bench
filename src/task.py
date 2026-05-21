@@ -367,14 +367,27 @@ class BenchmarkResults:
             'task_results': [tr.to_dict() for tr in self.task_results],
         }
 
-    def save(self, run_dir: Path):
-        """Save aggregate results to run_dir/benchmark_results.json (or _partial-benchmark_results.json)."""
+    def save(self, run_dir: Path, judge: str = ''):
+        """Save aggregate results to run_dir/benchmark_results_judge_<judge>.json (or _partial-...)."""
         run_dir.mkdir(parents=True, exist_ok=True)
-        filename = '_partial-benchmark_results.json' if self.partial else 'benchmark_results.json'
-        filepath = run_dir / filename
+        judge_clean = judge.replace('/', '-').replace(':', '-') if judge else ''
+        suffix = f'_judge_{judge_clean}' if judge_clean else ''
+        prefix = '_partial-benchmark_results' if self.partial else 'benchmark_results'
+        base = f'{prefix}{suffix}.json'
+        filepath_candidate = run_dir / base
+        if filepath_candidate.exists():
+            idx = 1
+            while (run_dir / f'{prefix}{suffix}_{idx}.json').exists():
+                idx += 1
+            base = f'{prefix}{suffix}_{idx}.json'
+        filepath = run_dir / base
 
         if not self.partial:
-            (run_dir / '_partial-benchmark_results.json').unlink(missing_ok=True)
+            partial_base = f'_partial-benchmark_results{suffix}'
+            for p in run_dir.iterdir():
+                name = p.name
+                if name == f'{partial_base}.json' or (name.startswith(f'{partial_base}_') and name.endswith('.json')):
+                    p.unlink()
         with open(filepath, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
 

@@ -37,7 +37,7 @@
             "source": "new_particle_properties",
             "category": "scientific reasoning",
             "name": "Particle mass M",
-            "description": "Did the model estimate the mass of new particle as {particle_mass:.2f} GeV/c², or value in range [{particle_mass_min:.2f}, {particle_mass_max:.2f}] GeV/c²?",
+            "description": "Did the model estimate the mass of new particle as {particle_mass:.2f} GeV/c^2, or value in range [{particle_mass_min:.2f}, {particle_mass_max:.2f}] GeV/c²?",
             "weight": 10.0
         },
         {
@@ -53,7 +53,7 @@
             "source": "new_particle_properties",
             "category": "scientific reasoning",
             "name": "Decay width$",
-            "description": "Did the model estimate the decay width of new particle as {particle_width:.2f} GeV/c², or value in range [{particle_width_min:.2f}, {particle_width_max:.2f}] GeV/c²?",
+            "description": "Did the model estimate the decay width of new particle as {particle_width:.2f} GeV/c^2, or value in range [{particle_width_min:.2f}, {particle_width_max:.2f}] GeV/c^2?",
             "weight": 10.0
         },
         {

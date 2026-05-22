@@ -3,7 +3,7 @@
         {
             "key": "summary",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Included summary section",
             "description": "Did the model include SUMMARY section in its response?",
             "weight": 1.0
@@ -11,7 +11,7 @@
         {
             "key": "no_of_galaxies",
             "source": "results",
-            "category": "data handling",
+            "dimension": "data handling",
             "name": "Correct number of galaxies",
             "description": "Did the model estimate redshifts of exactly {no_of_galaxies} galaxies?",
             "weight": 2.0
@@ -19,7 +19,7 @@
         {
             "key": "z_estimation_section",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Listed section measured redshifts",
             "description": "Did the model include REDSHIFTS OF GALAXIES USED IN THE ANALYSIS section in its response?",
             "weight": 1.0
@@ -27,7 +27,7 @@
         {
             "key": "z_estimation",
             "source": "analyzed_galaxies",
-            "category": "image data extraction",
+            "dimension": "image data extraction",
             "name": "Redshift estimation",
             "description": "Did the model compute that {galaxy_ID} has redshift {z}, or value strictly inside interval [{z_min} , {z_max}]?",
             "weight": 8.0
@@ -35,7 +35,7 @@
         {
             "key": "fit_function",
             "source": "none",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Fitted function - linear",
             "description": "Did the model state that it fitted a linear function?",
             "weight": 5.0
@@ -43,7 +43,7 @@
         {
             "key": "fit_function_offse",
             "source": "none",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Fitted function - zero offset",
             "description": "Did the model state that the linear function it fitted has zero offset, or claimed semantically equivalent information?",
             "weight": 4.0
@@ -51,7 +51,7 @@
         {
             "key": "hubble_section",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Included Hubble constant section",
             "description": "Did the model include HUBBLE CONSTANT section in its response?",
             "weight": 1.0
@@ -59,7 +59,7 @@
         {
             "key": "h_estimation",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Hubble constant estimation",
             "description": "Did the model compute that Hubble constant as {hubble_constant} km/s/Mpc, or value strictly inside interval [{hubble_constant_min}, {hubble_constant_max}] km/s/Mpc?",
             "weight": 10.0
@@ -67,7 +67,7 @@
         {
             "key": "h_stdev_estimation",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Uncertainty on Hubble constant",
             "description": "Did the model compute statistical uncertainty on estimation of Hubble constant as {stdev} km/s/Mpc, or value strictly inside interval [{stdev_min}, {stdev_max}] km/s/Mpc?",
             "weight": 8.0

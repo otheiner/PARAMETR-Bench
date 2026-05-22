@@ -8,7 +8,7 @@
             "NUMBER_OF_DAYS": 10,
             "NUMBER_OF_MACHINES" : 3,
             "NUMBER_OF_BATCHES" : 2,
-            "MACHINE_FAULTY_PROBABILITY" : 0.5
+            "MACHINE_FAULTY_PROBABILITY" : 0.4
         },
         "medium": {
             "NUMBER_OF_MEASUREMENTS" : 20,

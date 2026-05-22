@@ -3,7 +3,7 @@
         {
             "key": "cepheids_with_data",
             "source": "redshifts",
-            "category": "data handling",
+            "dimension": "data handling",
             "name": "Listed Cepheids with data",
             "description": "Did the model list Cepheid {cepheid_ID} in the list of Cepheids with measured redshift?",
             "weight": 2.0
@@ -11,7 +11,7 @@
         {
             "key": "cepheids_without_data",
             "source": "excluded_cepheids",
-            "category": "data handling",
+            "dimension": "data handling",
             "name": "Did not list Cepheids without data",
             "description": "Did the model not include Cepheid {cepheid_ID} in the list with measured redshift?",
             "weight": 2.0
@@ -19,7 +19,7 @@
         {
             "key": "estimated_redshifts",
             "source": "redshifts",
-            "category": "image data extraction",
+            "dimension": "image data extraction",
             "name": "Estimated redshifts",
             "description": "Did the model estimate that galaxy containing Cepheid variable {cepheid_ID} has redshift {z}, or stated value strictly inside the interval {z_allowed_interval}?",
             "weight": 8.0
@@ -27,7 +27,7 @@
         {
             "key": "fitted_function",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Fitted function form",
             "description": "Did the model fit into a data linear function with offset and the slope as free parameters?",
             "weight": 3.0
@@ -35,7 +35,7 @@
         {
             "key": "estimated_a",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Estimated 'a'",
             "description": "Did the model estimate parameter 'a' as {a}, or value strictly inside interval {a_allowed_interval}?",
             "weight": 10.0
@@ -43,7 +43,7 @@
         {
             "key": "estimated_a_sigma",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Estimated 'sigma_a'",
             "description": "Did the model estimate uncertainty of parameter 'a' as {a_sigma}, or value strictly inside interval {a_sigma_allowed_interval}?",
             "weight": 8.0
@@ -51,7 +51,7 @@
         {
             "key": "estimated_b",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Estimated 'b'",
             "description": "Did the model estimate parameter 'b' as {b}, or value strictly inside interval {b_allowed_interval}?",
             "weight": 1.0
@@ -59,7 +59,7 @@
         {
             "key": "estimated_b_sigma",
             "source": "results",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Estimated 'sigma_b'",
             "description": "Did the model estimate uncertainty of parameter 'b' as {b_sigma}, or value strictly inside interval {b_sigma_allowed_interval}?",
             "weight": 8.0

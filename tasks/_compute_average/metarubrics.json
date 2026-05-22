@@ -3,7 +3,7 @@
         {
             "key": "found_numbers",
             "source": "numbers",
-            "category": "data handling",
+            "dimension": "data handling",
             "name": "Found the correct numbers.",
             "description": "Did the model correctly find the number {input_number}?",
             "weight": 2.0
@@ -11,7 +11,7 @@
         {
             "key": "computed_average",
             "source": "final_result",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Computed correctly the average.",
             "description": "Did the model correctly compute the average {average:.2f}, or value that matches the average when both numbers are rounded to two decimal digits?",
             "weight": 10.0
@@ -19,7 +19,7 @@
         {
             "key": "non_empty_answer",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Returned answer.",
             "description": "Did the model return non-empty answer?",
             "weight": 1.0

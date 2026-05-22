@@ -3,7 +3,7 @@
         {
             "key": "analysis-summary",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Analysis summary",
             "description": "Did the model provide a summary of the invariant mass reconstructions in the SUMMARY section?",
             "weight": 1.0
@@ -11,7 +11,7 @@
         {
             "key": "detector_dimensions",
             "source": "detector",
-            "category": "image data extraction",
+            "dimension": "image data extraction",
             "name": "Detector dimensions retrieval",
             "description": "Did the model identify that the {layer} has radius {radius:.3f} m?",
             "weight": 1.0
@@ -19,7 +19,7 @@
         {
             "key": "per-event_mass_listing",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Per-event mass listing",
             "description": "Did the model list the invariant masses of the parent particle in INTERMEDIATE RESULTS PER EVENT section?",
             "weight": 1.0
@@ -27,7 +27,7 @@
         {
             "key": "invariant_masses",
             "source": "events_sampled",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Per-event invariant mass reconstruction",
             "description": "Did the model reconstruct invariant mass of a parent particle in event {event_id} as {mass:.2f} GeV or value in range [{mass_min:.2f}, {mass_max:.2f}] GeV?",
             "weight": 4.0
@@ -35,7 +35,7 @@
         {
             "key": "final_result_mass",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Final result existence - mass",
             "description": "Did the model state the mass of the unknown particle in the FINAL RESULTS section?",
             "weight": 1.0
@@ -43,7 +43,7 @@
         {
             "key": "new_particle_mass",
             "source": "new_particle_properties",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Particle mass M",
             "description": "Did the model estimate the mass of new particle as {particle_mass:.2f} GeV/c^2, or value in range [{particle_mass_min:.2f}, {particle_mass_max:.2f}] GeV/c²?",
             "weight": 10.0
@@ -51,7 +51,7 @@
         {
             "key": "final_result_width",
             "source": "none",
-            "category": "instructions following",
+            "dimension": "instructions following",
             "name": "Final result existence - decay width",
             "description": "Did the model state the decay width of the unknown particle in the FINAL RESULTS section?",
             "weight": 1.0
@@ -59,7 +59,7 @@
         {
             "key": "new_particle_decay_width",
             "source": "new_particle_properties",
-            "category": "scientific reasoning",
+            "dimension": "scientific reasoning",
             "name": "Decay width$",
             "description": "Did the model estimate the decay width of new particle as {particle_width:.2f} GeV/c^2, or value in range [{particle_width_min:.2f}, {particle_width_max:.2f}] GeV/c^2?",
             "weight": 10.0

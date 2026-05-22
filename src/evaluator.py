@@ -8,7 +8,8 @@ import tempfile
 import time
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
-from src.task import Task, TaskResults, MetarubricResult
+from src.task import Task
+from src.results import TaskResults, MetarubricResult
 from src.utils import get_git_hash
 from src.tools import TOOLS, _load_sandbox_libraries
 
@@ -434,14 +435,14 @@ class Evaluator:
 
             results.append(MetarubricResult(
                 metarubric_name = mr_data['name'],
-                category        = mr_data.get('category', ''),
+                dimension        = mr_data.get('dimension', ''),
                 total           = len(rubrics),
                 passed          = passed,
                 weight          = mr_data['weight']
             ))
             raw_data.append({
                 'name':     mr_data['name'],
-                'category': mr_data.get('category', ''),
+                'dimension': mr_data.get('dimension', ''),
                 'rubrics':  rubric_verdicts,
             })
 

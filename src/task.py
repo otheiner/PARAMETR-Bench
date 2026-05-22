@@ -1,398 +1,21 @@
 """
-task.py — Abstract base class for benchmark tasks, MetaRubric, and TaskResult.
+task.py — Abstract base class for benchmark tasks.
 
 Contributors implementing new tasks should inherit from Task and implement:
-    - generate()
+    - _generate()
 """
 
 import json
-import re
 import mimetypes
 from typing import Optional
-import numpy as np
 import pandas as pd
 import base64
 from pathlib import Path
-from scipy import stats
 import shutil
-
-from dataclasses import dataclass, field
-from statsmodels.stats.proportion import proportion_confint
 from abc import ABC, abstractmethod
 
+from src.metarubric import Metarubric
 
-# ─────────────────────────────────────────────────────────────
-# Metarubric
-# ─────────────────────────────────────────────────────────────
-@dataclass
-class Metarubric:
-    """
-    A template + dataframe that unpacks into individual rubric criteria.
-    
-    Attributes:
-        key:                    - short snake_case key to identify the metarubric
-        source:                 - name of the dataframe in ground_truth.json that contains the data for this metarubric
-        category:               - skill category; allowed values: "scientific reasoning" | "data handling" | "image data extraction" | "instructions following" 
-                                  (can be used for weighting and analysis by skill type)
-        name:                   - short human readable name
-        description:            - f-string with {column_name} placeholders - this gets unpacked 
-                                  to individual rubric criteria by unpacking metarubric
-        weight:                 - overall weight of the metarubric item (when the metarubric 
-                                  is unpacked to multiple rubric criteria, the weight is distributed 
-                                  equally among them)
-        columns:                - list of column names extracted from description placeholders
-        dataframe:              - dataframe with columns corresponding to the placeholders in 
-                                  description   
-    """
-
-    key :             str
-    source:           str
-    category:         str
-    name:             str
-    description:      str
-    weight:           float = 1.0
-    
-    # Not passed in __init__ — computed from description
-    columns:        list[str]    = field(init=False)
-    dataframe:      pd.DataFrame = field(init=False)
-    
-
-    def __post_init__(self):
-        """Called automatically after __init__."""
-        self.columns   = re.findall(r'\{(\w+)[^}]*\}', self.description)
-        self.dataframe = pd.DataFrame(columns=self.columns)
-    
-
-    def unpack(self) -> list[str]:
-        """Expand description with each row of dataframe."""
-        if self.source == 'none':
-            return [self.description]
-
-        return [
-            self.description.format(**row.to_dict())
-            for _, row in self.dataframe.iterrows()
-        ]
-    
-
-# ─────────────────────────────────────────────────────────────
-# MetarubricResult
-# ─────────────────────────────────────────────────────────────
-@dataclass
-class MetarubricResult:
-    """
-    Result of evaluating one Metarubric.
-    
-    Attributes:
-        metarubric_name: name of the metarubric
-        total:           total number of criteria
-        passed:          number passing numerical check
-        weight:          importance relative to other metarubrics
-        category:        metarubrics category allowing to group items by skill type   
-    """
-    metarubric_name: str
-    total:           int
-    passed:          int
-    category:        str
-    weight:          float = 1.0
-
-    @property
-    def success_rate(self) -> float:
-        return self.passed / self.total if self.total > 0 else 0.0
-
-    @property
-    def confidence_interval(self) -> tuple[float, float]:
-        """Wilson score 95% CI — better than normal approximation for small N."""
-        if self.total == 0:
-            return (0.0, 0.0)
-        lo, hi = proportion_confint(
-            self.passed,
-            self.total,
-            alpha=0.05,
-            method='wilson'
-        )
-        return (lo, hi)
-
-    def __str__(self) -> str:
-        lo, hi = self.confidence_interval
-
-        # Make all names the same width
-        aligned_name = (self.metarubric_name + ":").ljust(50)
-        return (
-            f"{aligned_name}"
-            f"{self.passed}/{self.total} "
-            f"({self.success_rate:.1%}, "
-            f"95% CI: [{lo:.1%}, {hi:.1%}])"
-        )
-
-# ─────────────────────────────────────────────────────────────
-# TaskResults
-# ─────────────────────────────────────────────────────────────
-@dataclass
-class TaskResults:
-    """
-    Results of evaluating a task.
-    
-    Attributes:
-        task_name:           name of the task
-        seed:                seed used to generate the instance of the task
-        difficulty:          difficulty of the task fixes value of parameters from config.json
-        model:               model under test
-        judge:               model used as a judge
-        git_commit:          git commit hash to make it possible to trace back to the exact code used for evaluation
-        timestamp:           timestamp of when the evaluation was run
-        metarubric_results:  list of metarubric results
-    """
-    task_name:          str
-    seed:               int
-    difficulty:         str
-    model:              str
-    judge:              str
-    git_commit:         str
-    timestamp:          str
-    metarubric_results: list[MetarubricResult]
-
-    @property
-    def weighted_success_rate(self) -> float:
-        """Weighted average success rate across metarubrics."""
-        total_weight = sum(mr.weight for mr in self.metarubric_results)
-        weighted_sum = sum(mr.success_rate * mr.weight
-                          for mr in self.metarubric_results)
-        return weighted_sum / total_weight if total_weight > 0 else 0.0
-
-    @property
-    def confidence_interval(self) -> tuple[float, float]:
-        """Wilson score 95% CI aggregated across metarubrics using weights."""
-        passed = sum(mr.passed for mr in self.metarubric_results)
-        total  = sum(mr.total for mr in self.metarubric_results)
-        if total == 0:
-            return (0.0, 0.0)
-        lo, hi = proportion_confint(
-            passed,
-            total,
-            alpha=0.05,
-            method='wilson'
-        )
-        return (lo, hi)
-
-    def __str__(self) -> str:
-        lo, hi = self.confidence_interval
-        lines = [
-            f"Task:       {self.task_name}",
-            f"Model:      {self.model}",
-            f"Judge:      {self.judge}",
-            f"Difficulty: {self.difficulty}  |  Seed: {self.seed}",
-            f"Commit:     {self.git_commit}  |  {self.timestamp}",
-        ]
-        for mr in self.metarubric_results:
-            lines.append(f"      - {mr}")
-        lines.append(f"      {'─' * 50}")
-        lines.append(
-            f"      Weighted total: {self.weighted_success_rate:.1%}"
-        )
-        return '\n'.join(lines)
-
-    def to_dict(self) -> dict:
-        lo, hi = self.confidence_interval
-        return {
-            'task':       self.task_name,
-            'seed':       self.seed,
-            'difficulty': self.difficulty,
-            'model':      self.model,
-            'judge':      self.judge,
-            'git_commit': self.git_commit,
-            'timestamp':  self.timestamp,
-            'metarubrics': [
-                {
-                    'name':         mr.metarubric_name,
-                    'category':     mr.category,
-                    'total':        mr.total,
-                    'passed':       mr.passed,
-                    'weight':       mr.weight,
-                    'success_rate': mr.success_rate,
-                    'ci_low':       mr.confidence_interval[0],
-                    'ci_high':      mr.confidence_interval[1]
-                }
-                for mr in self.metarubric_results
-            ],
-            'aggregate': {
-                'weighted_success_rate': self.weighted_success_rate,
-                'ci_low':                lo,
-                'ci_high':               hi
-            }
-        }
-
-    @classmethod
-    def from_dict(cls, d: dict) -> 'TaskResults':
-        """Reconstruct a TaskResults from a saved judge_response.json dict."""
-        return cls(
-            task_name          = d['task'],
-            seed               = d['seed'],
-            difficulty         = d['difficulty'],
-            model              = d['model'],
-            judge              = d['judge'],
-            git_commit         = d['git_commit'],
-            timestamp          = d['timestamp'],
-            metarubric_results = [
-                MetarubricResult(
-                    metarubric_name = mr['name'],
-                    category        = mr['category'],
-                    total           = mr['total'],
-                    passed          = mr['passed'],
-                    weight          = mr['weight'],
-                )
-                for mr in d['metarubrics']
-            ],
-        )
-
-# ─────────────────────────────────────────────────────────────
-# BenchmarkResults
-# ─────────────────────────────────────────────────────────────
-@dataclass
-class BenchmarkResults:
-    """
-    Results of evaluating a benchmark — collection of task results.
-
-    Attributes:
-        task_results:  list of TaskResults for each evaluated task
-        model:         model evaluated
-        judge:         judge model used for all runs
-        difficulty:    difficulty level
-        seeds:         random seeds used
-        git_commit:    git commit hash for reproducibility
-        timestamp:     timestamp of when benchmark run started
-        partial:       whether this is a partial run (used to flag runs that have some failed tests - e.g. due to API errors)
-    """
-    task_results:  list[TaskResults]
-    model:         str
-    judge:         str
-    difficulty:    str
-    seeds:         list[int]
-    git_commit:    str
-    timestamp:     str
-    partial:       bool = False
-
-    @property
-    def success_rate(self) -> float:
-        """Success rate across all task results."""
-        if not self.task_results:
-            return 0.0
-        return sum(tr.weighted_success_rate
-                   for tr in self.task_results) / len(self.task_results)
-
-    @property
-    def confidence_interval(self) -> tuple[float, float]:
-        """95% CI across task success rates."""
-        rates = [tr.weighted_success_rate for tr in self.task_results]
-        if len(rates) < 2:
-            return (0.0, 1.0)
-        
-        mean  = np.mean(rates)
-        se    = np.std(rates, ddof=1) / np.sqrt(len(rates))
-        z     = stats.norm.ppf(0.975)  # 95% confidence interval
-        
-        return (
-            float(max(0.0, mean - z * se)),
-            float(min(1.0, mean + z * se))
-        )
-
-    def results_by_model(self) -> dict[str, list[TaskResults]]:
-        """Group task results by model for per-model analysis."""
-        by_model = {}
-        for tr in self.task_results:
-            if tr.model not in by_model:
-                by_model[tr.model] = []
-            by_model[tr.model].append(tr)
-        return by_model
-
-    def __str__(self) -> str:
-        lines = []
-
-        # Run metadata 
-        lines.append(f"Judge:      {self.judge}")
-        lines.append(f"Difficulty: {self.difficulty}")
-        lines.append(f"Seeds:      {self.seeds}")
-        lines.append(f"Commit:     {self.git_commit}  |  {self.timestamp}")
-        lines.append('-' * 50)
-
-        # Per-model summary 
-        for model, results in self.results_by_model().items():
-            rates     = [tr.weighted_success_rate for tr in results]
-            mean      = float(np.mean(rates))
-            se        = float(np.std(rates, ddof=1) / np.sqrt(len(rates))) if len(rates) > 1 else 0.0
-            z         = stats.norm.ppf(0.975)
-            lo        = float(max(0.0, mean - z * se))
-            hi        = float(min(1.0, mean + z * se))
-
-            lines.append(f"Model: {model}")
-            lines.append(f"{'─' * 50}")
-            for tr in results:
-                lines.append(str(tr))
-                lines.append('')
-            lines.append(
-                f"  {model} total: {mean:.1%} "
-                f"  95% CI: [{lo:.1%}, {hi:.1%}]  "
-                f"({len(results)} runs)"
-            )
-            lines.append('')
-
-        return '\n'.join(lines)
-
-    def to_dict(self) -> dict:
-        model_summaries = {}
-        for model, results in self.results_by_model().items():
-            rates        = [tr.weighted_success_rate for tr in results]
-            mean         = float(np.mean(rates))
-            se           = float(np.std(rates, ddof=1) / np.sqrt(len(rates))) if len(rates) > 1 else 0.0
-            z            = stats.norm.ppf(0.975) # 95% confidence interval
-            lo           = float(max(0.0, mean - z * se))
-            hi           = float(min(1.0, mean + z * se))
-            model_summaries[model] = {
-                'success_rate': mean,
-                'ci_low':       lo,
-                'ci_high':      hi,
-                'n_tasks':      len(results)
-            }
-
-        return {
-            'run': {
-                'model':      self.model,
-                'judge':      self.judge,
-                'difficulty': self.difficulty,
-                'seeds':      self.seeds,
-                'git_commit': self.git_commit,
-                'timestamp':  self.timestamp,
-                'partial':    self.partial,
-            },
-            'by_model': model_summaries,
-            'task_results': [tr.to_dict() for tr in self.task_results],
-        }
-
-    def save(self, run_dir: Path, judge: str = ''):
-        """Save aggregate results to run_dir/benchmark_results_judge_<judge>.json (or _partial-...)."""
-        run_dir.mkdir(parents=True, exist_ok=True)
-        judge_clean = judge.replace('/', '-').replace(':', '-') if judge else ''
-        suffix = f'_judge_{judge_clean}' if judge_clean else ''
-        prefix = '_partial-benchmark_results' if self.partial else 'benchmark_results'
-        base = f'{prefix}{suffix}.json'
-        filepath_candidate = run_dir / base
-        if filepath_candidate.exists():
-            idx = 1
-            while (run_dir / f'{prefix}{suffix}_{idx}.json').exists():
-                idx += 1
-            base = f'{prefix}{suffix}_{idx}.json'
-        filepath = run_dir / base
-
-        if not self.partial:
-            partial_base = f'_partial-benchmark_results{suffix}'
-            for p in run_dir.iterdir():
-                name = p.name
-                if name == f'{partial_base}.json' or (name.startswith(f'{partial_base}_') and name.endswith('.json')):
-                    p.unlink()
-        with open(filepath, 'w') as f:
-            json.dump(self.to_dict(), f, indent=2)
-
-        print(f"✓ Benchmark results saved: {filepath}")
-        return filepath
 
 # ─────────────────────────────────────────────────────────────
 # Task - abstract base class for benchmark tasks
@@ -638,7 +261,7 @@ class Task(ABC):
             mr = Metarubric(
                 key            = metarubric['key'],
                 source         = metarubric['source'],
-                category       = metarubric['category'],
+                dimension       = metarubric['dimension'],
                 name           = metarubric['name'],
                 description    = metarubric['description'],
                 weight         = metarubric.get('weight', 1.0)
@@ -656,6 +279,13 @@ class Task(ABC):
         errors = []
         
         for mr in self.metarubrics.values():
+            if mr.dimension not in Metarubric.ALLOWED_DIMENSIONS:
+                errors.append(
+                    f"Metarubric '{mr.key}': "
+                    f"invalid dimension '{mr.dimension}'. "
+                    f"Allowed: {sorted(Metarubric.ALLOWED_DIMENSIONS)}"
+                )
+
             if len(mr.dataframe) == 0 and mr.source != 'none':
                 errors.append(
                     f"Metarubric '{mr.key}': "
@@ -738,7 +368,7 @@ class Task(ABC):
                 {
                     'key':    mr.key,
                     'name':   mr.name,
-                    'category': mr.category,
+                    'dimension': mr.dimension,
                     'weight': mr.weight,
                     'total':  len(mr.dataframe) if mr.source != 'none' else 1,
                     'rubrics': [

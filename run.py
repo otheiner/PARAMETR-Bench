@@ -15,7 +15,8 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-from src.task import Task, TaskResults, MetarubricResult, BenchmarkResults
+from src.task import Task
+from src.results import TaskResults, MetarubricResult, BenchmarkResults
 from src.evaluator import Evaluator
 from src.utils import get_git_hash, is_working_tree_dirty
 
@@ -158,7 +159,7 @@ def _task_results_from_judge_response(dest_dir: Path, task_name: str, seed: int,
         metarubric_results = [
             MetarubricResult(
                 metarubric_name = mr['name'],
-                category        = mr['category'],
+                dimension        = mr['dimension'],
                 total           = len(mr['rubrics']),
                 passed          = sum(1 for r in mr['rubrics'] if r['verdict'] == 'YES'),
                 weight          = weight_by_name[mr['name']],
@@ -171,7 +172,9 @@ def _task_results_from_judge_response(dest_dir: Path, task_name: str, seed: int,
 def _aggregate_results(run_dir: Path, model: str, judge: str,
                         difficulty: str, seeds: list[int],
                         task_names: list[str],
-                        failures: list[dict]) -> BenchmarkResults:
+                        failures: list[dict],
+                        agentic: bool = False,
+                        max_turns: int = 0) -> BenchmarkResults:
     """Reconstruct BenchmarkResults from judge_response + rubrics files."""
     task_results = []
     incomplete   = []
@@ -216,6 +219,8 @@ def _aggregate_results(run_dir: Path, model: str, judge: str,
         seeds        = seeds,
         git_commit   = get_git_hash(),
         timestamp    = datetime.now().isoformat(),
+        agentic      = agentic,
+        max_turns    = max_turns,
         partial      = is_partial,
     )
 
@@ -505,12 +510,11 @@ def main():
             seeds      = seeds,
             task_names = task_names,
             failures   = failures,
+            agentic    = agentic,
+            max_turns  = max_turns,
         )
         benchmark.save(run_dir, judge=judge)
         if not failures:
-            print(f"\n{'=' * 50}")
-            print("BENCHMARK RESULTS")
-            print('=' * 50)
             print(benchmark)
             
 

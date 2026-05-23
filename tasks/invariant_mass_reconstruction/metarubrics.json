@@ -25,6 +25,14 @@
             "weight": 1.0
         },
         {
+            "key": "no_of_particles",
+            "source": "misc",
+            "dimension": "instructions following",
+            "name": "Number of events in the list",
+            "description": "Did the model list exactly {no_of_events_in_the_list} events in the INTERMEDIATE RESULTS PER EVENT section?",
+            "weight": 1.0
+        },
+        {
             "key": "invariant_masses",
             "source": "events_sampled",
             "dimension": "scientific reasoning",

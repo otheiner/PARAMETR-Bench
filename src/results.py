@@ -208,24 +208,31 @@ class BenchmarkResults:
 
     @property
     def success_rate(self) -> float:
-        """Success rate across all task results."""
-        if not self.task_results:
-            return 0.0
-        return sum(tr.weighted_success_rate
-                   for tr in self.task_results) / len(self.task_results)
+        """Weighted mean success rate across all metarubrics in all task results.
+
+        Tasks with more or heavier metarubrics contribute proportionally more,
+        making the score robust to tasks of different lengths.
+        """
+        weight_sum   = sum(mr.weight for tr in self.task_results for mr in tr.metarubric_results)
+        weighted_sum = sum(mr.weight * mr.success_rate for tr in self.task_results for mr in tr.metarubric_results)
+        return weighted_sum / weight_sum if weight_sum > 0 else 0.0
 
     @property
     def confidence_interval(self) -> tuple[float, float]:
-        """95% CI across task success rates."""
+        """95% CI on the weighted success rate using normal approximation over per-task-run rates.
+
+        Each task run contributes one weighted_success_rate observation, matching
+        the quantity that success_rate aggregates — so the CI is consistent with
+        the point estimate.
+        """
         rates = [tr.weighted_success_rate for tr in self.task_results]
         if len(rates) < 2:
             return (0.0, 1.0)
-        mean  = np.mean(rates)
-        se    = np.std(rates, ddof=1) / np.sqrt(len(rates))
-        z     = stats.norm.ppf(0.975)
+        se = np.std(rates, ddof=1) / np.sqrt(len(rates))
+        z  = stats.norm.ppf(0.975)
         return (
-            float(max(0.0, mean - z * se)),
-            float(min(1.0, mean + z * se))
+            float(max(0.0, self.success_rate - z * se)),
+            float(min(1.0, self.success_rate + z * se)),
         )
 
     def results_by_task(self) -> dict[str, list[TaskResults]]:
@@ -305,10 +312,13 @@ class BenchmarkResults:
         
         lines.append('-' * 50)
         # Overall score
-        rates = [tr.weighted_success_rate for tr in self.task_results]
-        if rates:
-            mean = float(np.mean(rates))
-            lines.append(f"Overall score: {mean:.1%}  ({len(rates)} task runs)")
+        if self.task_results:
+            lo, hi = self.confidence_interval
+            lines.append(
+                f"Overall score: {self.success_rate:.1%}  "
+                f"95% CI: [{lo:.1%}, {hi:.1%}]  "
+                f"({len(self.task_results)} task runs)"
+            )
 
         # Per-task summary combined across seeds
         lines.append('\n\n')
@@ -353,8 +363,6 @@ class BenchmarkResults:
         return '\n'.join(lines)
 
     def to_dict(self) -> dict:
-        rates = [tr.weighted_success_rate for tr in self.task_results]
-        mean  = float(np.mean(rates)) if rates else 0.0
 
         by_task = {}
         for task_name, task_results in self.results_by_task().items():
@@ -395,8 +403,10 @@ class BenchmarkResults:
                 'partial':    self.partial,
             },
             'summary': {
-                'success_rate': mean,
-                'n_task_runs':  len(rates),
+                'success_rate': self.success_rate,
+                'ci_low':       self.confidence_interval[0],
+                'ci_high':      self.confidence_interval[1],
+                'n_task_runs':  len(self.task_results),
             },
             'by_task':      by_task,
             'by_dimension': {

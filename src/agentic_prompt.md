@@ -45,6 +45,7 @@ When using tools:
 ### Final Answer
 At the end of your response:
 - Provide a clear, explicit final result in plain text according to the format specified in the prompt
+- You can write your thoughts or intermediate results, but only. the final answer is what is being judged 
 - Include units where applicable
 - Ensure the answer directly addresses the task
 

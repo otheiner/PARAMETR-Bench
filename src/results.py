@@ -94,18 +94,26 @@ class TaskResults:
 
     @property
     def confidence_interval(self) -> tuple[float, float]:
-        """Wilson score 95% CI aggregated across metarubrics using weights."""
-        passed = sum(mr.passed for mr in self.metarubric_results)
-        total  = sum(mr.total for mr in self.metarubric_results)
-        if total == 0:
+        """95% CI on the weighted score via error propagation over metarubric binary outcomes.
+
+        Uses Wilson-adjusted pass rates for variance so that 0/n and n/n rubrics
+        contribute non-zero variance rather than collapsing the interval.
+        """
+        weight_sum = sum(mr.weight for mr in self.metarubric_results)
+        if weight_sum == 0:
             return (0.0, 0.0)
-        lo, hi = proportion_confint(
-            passed,
-            total,
-            alpha=0.05,
-            method='wilson'
+        z = stats.norm.ppf(0.975)
+        variance = 0.0
+        for mr in self.metarubric_results:
+            if mr.total == 0:
+                continue
+            p_adj = (mr.passed + z**2 / 2) / (mr.total + z**2)
+            variance += (mr.weight / weight_sum) ** 2 * p_adj * (1 - p_adj) / mr.total
+        se = np.sqrt(variance)
+        return (
+            float(max(0.0, self.weighted_success_rate - z * se)),
+            float(min(1.0, self.weighted_success_rate + z * se)),
         )
-        return (lo, hi)
 
     def __str__(self) -> str:
         lines = [
@@ -219,17 +227,26 @@ class BenchmarkResults:
 
     @property
     def confidence_interval(self) -> tuple[float, float]:
-        """95% CI on the weighted success rate using normal approximation over per-task-run rates.
+        """95% CI on the weighted score via error propagation over all metarubric binary outcomes.
 
-        Each task run contributes one weighted_success_rate observation, matching
-        the quantity that success_rate aggregates — so the CI is consistent with
-        the point estimate.
+        Uses Wilson-adjusted pass rates for variance so that 0/n and n/n rubrics
+        contribute non-zero variance rather than collapsing the interval.
+        Multiple seeds accumulate n_i across runs, naturally tightening the CI.
         """
-        rates = [tr.weighted_success_rate for tr in self.task_results]
-        if len(rates) < 2:
-            return (0.0, 1.0)
-        se = np.std(rates, ddof=1) / np.sqrt(len(rates))
-        z  = stats.norm.ppf(0.975)
+        weight_sum = sum(
+            mr.weight for tr in self.task_results for mr in tr.metarubric_results
+        )
+        if weight_sum == 0:
+            return (0.0, 0.0)
+        z = stats.norm.ppf(0.975)
+        variance = 0.0
+        for tr in self.task_results:
+            for mr in tr.metarubric_results:
+                if mr.total == 0:
+                    continue
+                p_adj = (mr.passed + z**2 / 2) / (mr.total + z**2)
+                variance += (mr.weight / weight_sum) ** 2 * p_adj * (1 - p_adj) / mr.total
+        se = np.sqrt(variance)
         return (
             float(max(0.0, self.success_rate - z * se)),
             float(min(1.0, self.success_rate + z * se)),
@@ -314,10 +331,13 @@ class BenchmarkResults:
         # Overall score
         if self.task_results:
             lo, hi = self.confidence_interval
+            n_outcomes = sum(
+                mr.total for tr in self.task_results for mr in tr.metarubric_results
+            )
             lines.append(
                 f"Overall score: {self.success_rate:.1%}  "
                 f"95% CI: [{lo:.1%}, {hi:.1%}]  "
-                f"({len(self.task_results)} task runs)"
+                f"({n_outcomes} binary outcomes across {len(self.task_results)} task runs)"
             )
 
         # Per-task summary combined across seeds

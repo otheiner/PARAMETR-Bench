@@ -577,6 +577,7 @@ class Evaluator:
                 stdout        = True,
                 stderr        = True,
                 remove        = True,
+                timeout       = 120,
             )
 
             result = output.decode() if output else "(no output)"
@@ -687,6 +688,7 @@ class Evaluator:
                 stdout        = True,
                 stderr        = True,
                 remove        = True,
+                timeout       = 120,
             )
 
             return output.decode() if output else "(no output)"

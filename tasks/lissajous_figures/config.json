@@ -3,12 +3,12 @@
 
     "difficulties": {
         "easy": {
-            "NUMBER_OF_MEASUREMENTS" : 6,
+            "NUMBER_OF_MEASUREMENTS" : 10,
             "NUMBER_OF_UNITS": 30,
             "NUMBER_OF_DAYS": 10,
             "NUMBER_OF_MACHINES" : 3,
             "NUMBER_OF_BATCHES" : 2,
-            "MACHINE_FAULTY_PROBABILITY" : 0.4,
+            "MACHINE_FAULTY_PROBABILITY" : 0.3,
             "FREQUENCY_PHASESHIFTS":{
                         "33.333333": 0.25,
                         "50": 0.3333,
@@ -54,5 +54,6 @@
         }
     },
     "fixed_parameters": {
+        "CORRECT_FREQ_KEYS" : ["10", "20", "30", "40", "50", "60"]
     }
 }

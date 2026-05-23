@@ -22,9 +22,10 @@ class LissajousFigures(Task):
     """
 
     def _save_lissajous(self, image_folder, measurement_id, a1, a2, reference_frequency, frequency, phase_shift):
+        rng = np.random.default_rng([self.seed, int(measurement_id)])
         t = np.linspace(0, 2 * np.pi, 10000)
-        x = a1 * np.sin(reference_frequency * t + np.pi * phase_shift)
-        y = a2 * np.sin(frequency * t)
+        x = rng.choice([-1, 1]) * a1 * np.sin(reference_frequency * t + np.pi * phase_shift)
+        y = rng.choice([-1, 1]) * a2 * np.sin(frequency * t)
         fig, ax = plt.subplots(figsize=(10, 10))
         ax.set_facecolor("black")
         fig.patch.set_facecolor("black")
@@ -61,6 +62,8 @@ class LissajousFigures(Task):
         MACHINE_FAULTY_PROBABILITY = self.get_params()["MACHINE_FAULTY_PROBABILITY"]
         NUMBER_OF_BATCHES = self.get_params()["NUMBER_OF_BATCHES"]
         FREQUENCY_PHASESHIFTS = self.get_params()["FREQUENCY_PHASESHIFTS"]
+        CORRECT_FREQ_KEYS = self.get_params()["CORRECT_FREQ_KEYS"]
+        CORRECT_FREQUENCIES = {float(k) for k in CORRECT_FREQ_KEYS}
 
         MACHINES_FAILURE = {}
         for machine in range(NUMBER_OF_MACHINES):
@@ -113,7 +116,7 @@ class LissajousFigures(Task):
 
         
         # Loop for the data generation
-        for measurement in range(NUMBER_OF_UNITS):
+        for _ in range(NUMBER_OF_UNITS):
             day = random.randint(1, NUMBER_OF_DAYS)
             reference_frequency = 100
             machine = random.choice(list(MACHINES_FAILURE.keys()))
@@ -123,9 +126,9 @@ class LissajousFigures(Task):
             supply_id = ''.join(random.choices(string.digits, k=8))
 
             if failure:
-                valid_keys = [k for k in FREQUENCY_PHASESHIFTS.keys() if k not in ["10","20","30","40","50","60"]]
+                valid_keys = [k for k in FREQUENCY_PHASESHIFTS.keys() if k not in CORRECT_FREQ_KEYS]
             else:
-                valid_keys = [k for k in FREQUENCY_PHASESHIFTS.keys() if k in ["10","20","30","40","50","60"]]
+                valid_keys = [k for k in FREQUENCY_PHASESHIFTS.keys() if k in CORRECT_FREQ_KEYS]
 
             frequency_key = random.choice(valid_keys)
             frequency = float(frequency_key)
@@ -157,8 +160,8 @@ class LissajousFigures(Task):
         # Guarantee at least 2 measured failure rows so metarubric frames are never empty.
         # Inject into the most failure-prone machine so it also registers as a faulty machine.
         MIN_FAULTY_MEASURED = 2
-        failure_freq_keys = [k for k in FREQUENCY_PHASESHIFTS.keys() if k not in ["10","20","30","40","50","60"]]
-        n_faulty_measured = int(((generated_data["measured"] == True) & (generated_data["frequency"] > 60)).sum())
+        failure_freq_keys = [k for k in FREQUENCY_PHASESHIFTS.keys() if k not in CORRECT_FREQ_KEYS]
+        n_faulty_measured = int(((generated_data["measured"] == True) & (~generated_data["frequency"].isin(CORRECT_FREQUENCIES))).sum())
         top_machine = max(MACHINES_FAILURE, key=MACHINES_FAILURE.get)
         for _ in range(MIN_FAULTY_MEASURED - n_faulty_measured):
             freq_key = random.choice(failure_freq_keys)
@@ -176,13 +179,54 @@ class LissajousFigures(Task):
                 'measured':          True,
                 'batch':             random.choice(BATCHES),
                 'frequency':         freq,
-                'reference_frequency': 100,
+                'reference_frequency': reference_frequency,
                 'phase_shift':       ps,
                 'a1':                ai1,
                 'a2':                ai2,
                 'measurement_id':    m_id,
             }])
             generated_data = pd.concat([generated_data, new_row], ignore_index=True)
+
+        # Guarantee at least 1 machine with failure_rate <= 10% so not_faulty_machines is never empty.
+        # Inject non-failure rows for the least failure-prone machine only if needed.
+        correct_freq_keys_list = [k for k in FREQUENCY_PHASESHIFTS.keys() if k in CORRECT_FREQ_KEYS]
+        bottom_machine = min(MACHINES_FAILURE, key=MACHINES_FAILURE.get)
+        temp_fr = generated_data[generated_data["measured"] == True].groupby('machine').agg(
+            failures=('failure', 'sum'),
+            total=('failure', 'count')
+        ).reset_index()
+        temp_fr['failure_rate'] = temp_fr['failures'] / temp_fr['total']
+        if len(temp_fr[temp_fr['failure_rate'] <= 0.1]) == 0:
+            bot_row = temp_fr[temp_fr['machine'] == bottom_machine]
+            if len(bot_row) == 0:
+                n_inject = 1
+            else:
+                f = int(bot_row['failures'].iloc[0])
+                t = int(bot_row['total'].iloc[0])
+                n_inject = 10 * f - t + 1  # ensures f/(t+n) < 10%
+            for _ in range(n_inject):
+                freq_key = random.choice(correct_freq_keys_list)
+                freq     = float(freq_key)
+                ps       = FREQUENCY_PHASESHIFTS[freq_key]
+                m_id     = ''.join(random.choices(string.digits, k=12))
+                ai1      = random.uniform(3, 5)
+                ai2      = random.uniform(3, 5)
+                self._save_lissajous(image_folder, m_id, ai1, ai2, 100, freq, ps)
+                new_row = pd.DataFrame([{
+                    'day':               random.randint(1, NUMBER_OF_DAYS),
+                    'supply_ID':         ''.join(random.choices(string.digits, k=8)),
+                    'machine':           bottom_machine,
+                    'failure':           False,
+                    'measured':          True,
+                    'batch':             random.choice(BATCHES),
+                    'frequency':         freq,
+                    'reference_frequency': reference_frequency,
+                    'phase_shift':       ps,
+                    'a1':                ai1,
+                    'a2':                ai2,
+                    'measurement_id':    m_id,
+                }])
+                generated_data = pd.concat([generated_data, new_row], ignore_index=True)
 
         # Print the dataframe to a .csv file, only with the columns that are needed for the analysis, and sorted by day
         generated_data.sort_values("day")[['day', 'supply_ID', 'machine', 'batch', 'measurement_id']].to_csv(
@@ -211,16 +255,16 @@ class LissajousFigures(Task):
             total=('failure', 'count')
         ).reset_index()
 
-        filtered_rows = generated_data[(generated_data["measured"] == 1) & 
-                                        (generated_data["frequency"] > 60)]
+        filtered_rows = generated_data[(generated_data["measured"] == 1) &
+                                        (~generated_data["frequency"].isin(CORRECT_FREQUENCIES))]
         
         filtered_rows[["supply_ID", "machine" ,"batch", "frequency"]].to_csv(
                         self.ground_truth_dir / "table_for_QA.csv", index=False)
         
         qa_data = filtered_rows[["supply_ID", "machine" ,"batch", "frequency"]]
 
-        complement_filtered_rows = generated_data[(generated_data["measured"] == 1) & 
-                                (generated_data["frequency"] <= 60)]
+        complement_filtered_rows = generated_data[(generated_data["measured"] == 1) &
+                                (generated_data["frequency"].isin(CORRECT_FREQUENCIES))]
         
         complement_qa_data = complement_filtered_rows[["supply_ID", "machine" ,"batch", "frequency"]]
 

@@ -522,6 +522,46 @@ class Evaluator:
         return sum(1 for v in verdicts if v), rubric_verdicts
 
     # ─────────────────────────────────────────
+    # Shared Docker sandbox runner
+    # ─────────────────────────────────────────
+    def _run_in_sandbox(self, command, session_dir: Path, cleanup: bool = False) -> str:
+        try:
+            client = docker.from_env()
+            client.ping()
+        except docker.errors.DockerException:
+            raise RuntimeError(
+                "⚠  Docker daemon is not running. "
+                "Start Docker Desktop and try again."
+            )
+        try:
+            output = client.containers.run(
+                image         = 'benchmark-sandbox',
+                command       = command,
+                working_dir   = '/home/agent/workspace',
+                user          = 'agent',
+                network_mode  = 'none',
+                mem_limit     = '512m',
+                memswap_limit = '512m',
+                cpu_quota     = 50000,
+                pids_limit    = 64,
+                volumes       = {str(session_dir): {'bind': '/home/agent/workspace', 'mode': 'rw'}},
+                tmpfs         = {'/tmp': ''},
+                detach        = False,
+                stdout        = True,
+                stderr        = True,
+                remove        = True,
+                timeout       = 120,
+            )
+            return output.decode() if output else "(no output)"
+        except docker.errors.ContainerError as e:
+            return e.stderr.decode() if e.stderr else str(e)
+        except Exception as e:
+            return f"Execution error: {e}"
+        finally:
+            if cleanup:
+                shutil.rmtree(session_dir, ignore_errors=True)
+
+    # ─────────────────────────────────────────
     # Run shell command in Docker sandbox
     # ─────────────────────────────────────────
     _ALLOWED_COMMANDS = {
@@ -531,7 +571,6 @@ class Evaluator:
     }
 
     def _run_command(self, command: str, session_dir: Path, max_chars: int = 5_000) -> str:
-        # Validate every command segment (split on ||, &&, |, ;)
         for segment in re.split(r'\|\||&&|[|;]', command):
             tokens = segment.strip().split()
             if not tokens:
@@ -539,59 +578,7 @@ class Evaluator:
             if tokens[0] not in self._ALLOWED_COMMANDS:
                 allowed = ', '.join(sorted(self._ALLOWED_COMMANDS))
                 return f"Error: '{tokens[0]}' is not allowed. Allowed commands: {allowed}."
-
-        # Check Docker daemon is running before attempting anything
-        try:
-            client = docker.from_env()
-            client.ping()
-        except docker.errors.DockerException:
-            raise RuntimeError(
-                "⚠  Docker daemon is not running. "
-                "Start Docker Desktop and try again."
-            )
-
-        # Use persistent session_dir
-        tmpdir  = session_dir
-        mode    = 'rw'      # read-write — agent can save files
-        cleanup = False     # session_dir managed by caller
-
-        try:
-            output = client.containers.run(
-                image         = 'benchmark-sandbox',
-                command       = ['sh', '-c', command],
-                working_dir   = '/home/agent/workspace',
-                user          = 'agent',
-                network_mode  = 'none',
-                mem_limit     = '512m',
-                memswap_limit = '512m',
-                cpu_quota     = 50000,
-                pids_limit    = 64,
-                volumes       = {
-                    str(tmpdir): {
-                        'bind': '/home/agent/workspace',
-                        'mode': mode
-                    }
-                },
-                tmpfs         = {'/tmp': ''},
-                detach        = False,
-                stdout        = True,
-                stderr        = True,
-                remove        = True,
-                timeout       = 120,
-            )
-
-            result = output.decode() if output else "(no output)"
-
-        except docker.errors.ContainerError as e:
-            result = e.stderr.decode() if e.stderr else str(e)
-
-        except Exception as e:
-            result = f"Execution error: {e}"
-
-        finally:
-            if cleanup:
-                shutil.rmtree(tmpdir, ignore_errors=True)
-
+        result = self._run_in_sandbox(['sh', '-c', command], session_dir)
         if len(result) > max_chars:
             result = result[:max_chars] + f"\n...(truncated at {max_chars} chars)"
         return result
@@ -643,62 +630,7 @@ class Evaluator:
     # Execute Python in Docker container sandbox
     # ─────────────────────────────────────────
     def _execute_python(self, code: str, session_dir: Path) -> str:
-        """
-        Execute model-generated Python code in an isolated Docker container.
-        If session_dir is provided, it is mounted as read-write workspace
-        allowing the agent to persist files between turns.
-        Otherwise a fresh read-only workspace is created per call.
-        """
-        # Check Docker daemon is running before attempting anything
-        try:
-            client = docker.from_env()
-            client.ping()
-        except docker.errors.DockerException:
-            raise RuntimeError(
-                "⚠  Docker daemon is not running. "
-                "Start Docker Desktop and try again."
-            )
-
-        # Use persistent session_dir
-        tmpdir  = session_dir
-        mode    = 'rw'      # read-write — agent can save files
-        cleanup = False     # session_dir managed by caller
-
-        try:
-            # Write script into workspace
-            (tmpdir / 'script.py').write_text(code)
-
-            output = client.containers.run(
-                image         = 'benchmark-sandbox',
-                command       = 'python /home/agent/workspace/script.py',
-                working_dir   = '/home/agent/workspace',
-                user          = 'agent',
-                network_mode  = 'none',
-                mem_limit     = '512m',
-                memswap_limit = '512m',
-                cpu_quota     = 50000,
-                volumes       = {
-                    str(tmpdir): {
-                        'bind': '/home/agent/workspace',
-                        'mode': mode
-                    }
-                },
-                tmpfs         = {'/tmp': ''},
-                detach        = False,
-                stdout        = True,
-                stderr        = True,
-                remove        = True,
-                timeout       = 120,
-            )
-
-            return output.decode() if output else "(no output)"
-
-        except docker.errors.ContainerError as e:
-            return e.stderr.decode() if e.stderr else str(e)
-
-        except Exception as e:
-            return f"Execution error: {e}"
-
-        finally:
-            if cleanup:
-                shutil.rmtree(tmpdir, ignore_errors=True)
+        """Execute model-generated Python code in an isolated Docker container.
+        session_dir is mounted read-write so files persist between turns."""
+        (session_dir / 'script.py').write_text(code)
+        return self._run_in_sandbox('python /home/agent/workspace/script.py', session_dir)

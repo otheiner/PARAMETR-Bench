@@ -587,4 +587,4 @@ class InvariantMassReconstruction(Task):
         df_sampled = df_events if len(df_events) <= 200 else df_events.sample(n=200, random_state=self.seed)
         self.ground_truth['events_sampled'] = df_sampled
 
-        self.ground_truth['misc'] = pd.DataFrame({'no_of_events_in_the_list' : [len(df_sampled)]})
+        self.ground_truth['misc'] = pd.DataFrame({'no_of_events_in_the_list' : [len(df_events)]})

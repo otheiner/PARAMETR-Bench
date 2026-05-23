@@ -524,6 +524,8 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Shared Docker sandbox runner
     # ─────────────────────────────────────────
+    SANDBOX_TIMEOUT = 120  # seconds
+
     def _run_in_sandbox(self, command, session_dir: Path, cleanup: bool = False) -> str:
         try:
             client = docker.from_env()
@@ -533,8 +535,9 @@ class Evaluator:
                 "⚠  Docker daemon is not running. "
                 "Start Docker Desktop and try again."
             )
+        container = None
         try:
-            output = client.containers.run(
+            container = client.containers.run(
                 image         = 'benchmark-sandbox',
                 command       = command,
                 working_dir   = '/home/agent/workspace',
@@ -546,18 +549,31 @@ class Evaluator:
                 pids_limit    = 64,
                 volumes       = {str(session_dir): {'bind': '/home/agent/workspace', 'mode': 'rw'}},
                 tmpfs         = {'/tmp': ''},
-                detach        = False,
+                detach        = True,
                 stdout        = True,
                 stderr        = True,
-                remove        = True,
-                timeout       = 120,
             )
-            return output.decode() if output else "(no output)"
-        except docker.errors.ContainerError as e:
-            return e.stderr.decode() if e.stderr else str(e)
+            timed_out = False
+            try:
+                container.wait(timeout=self.SANDBOX_TIMEOUT)
+            except Exception as e:
+                if 'ReadTimeout' in type(e).__name__:
+                    container.stop()
+                    timed_out = True
+                else:
+                    raise
+            output = container.logs(stdout=True, stderr=True).decode()
+            if timed_out:
+                output += f"\n[killed: exceeded {self.SANDBOX_TIMEOUT}s time limit]"
+            return output or "(no output)"
         except Exception as e:
             return f"Execution error: {e}"
         finally:
+            if container:
+                try:
+                    container.remove(force=True)
+                except Exception:
+                    pass
             if cleanup:
                 shutil.rmtree(session_dir, ignore_errors=True)
 

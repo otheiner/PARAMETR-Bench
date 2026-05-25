@@ -15,6 +15,7 @@ from src.tools import TOOLS, _load_sandbox_libraries
 
 import litellm
 litellm.request_timeout = 300
+litellm.modify_params = True   # inject dummy tool when history has tool-use but tools= is omitted
 #litellm._turn_on_debug()
 
 class Evaluator:
@@ -122,6 +123,61 @@ class Evaluator:
             print(f"\n[THINKING]\n{reasoning}\n[/THINKING]")
 
     # ─────────────────────────────────────────
+    # Print data/cache usage blocks
+    # ─────────────────────────────────────────
+    def _print_cache_usage(self, response):
+        usage = getattr(response, 'usage', None)
+        if usage is None:
+            return
+        priv    = getattr(usage, '__pydantic_private__', {}) or {}
+        created = priv.get('_cache_creation_input_tokens', 0) or 0
+        read    = priv.get('_cache_read_input_tokens', 0) or 0
+        if created or read:
+            print(f"  [cache] write={created} read={read}")
+
+    # ─────────────────────────────────────────
+    # Applying caching for Anthropic models
+    # ─────────────────────────────────────────
+    def _apply_cache_breakpoint(self, messages: list, model: str) -> None:
+        """Place Anthropic cache breakpoints on the first and last messages.
+
+        Anthropic allows at most 4 cache_control blocks per request. We use 2:
+        - messages[0]: stable cache for task instructions (cache hit every turn)
+        - messages[-1]: rolling cache for the full conversation history
+
+        Old markers are cleared before adding new ones so they never accumulate.
+        Cache reads are content-based on Anthropic's side, so old cached prefixes
+        are reused automatically even after their cache_control marker is removed.
+        """
+        provider = model.split('/')[0] if '/' in model else ''
+        if not messages or not ('claude' in model or provider == 'anthropic'):
+            return
+
+        # Remove all existing markers left from previous turns
+        for msg in messages:
+            content = msg.get('content')
+            if isinstance(content, list):
+                for i, block in enumerate(content):
+                    if isinstance(block, dict) and 'cache_control' in block:
+                        content[i] = {k: v for k, v in block.items() if k != 'cache_control'}
+
+        def mark_last_text_block(msg):
+            content = msg.get('content')
+            if isinstance(content, str):
+                msg['content'] = [{'type': 'text', 'text': content,
+                                    'cache_control': {'type': 'ephemeral'}}]
+            elif isinstance(content, list):
+                for i in range(len(content) - 1, -1, -1):
+                    block = content[i]
+                    if isinstance(block, dict) and block.get('type') in ('text', 'tool_result'):
+                        content[i] = {**block, 'cache_control': {'type': 'ephemeral'}}
+                        break
+
+        mark_last_text_block(messages[0])
+        if len(messages) > 1:
+            mark_last_text_block(messages[-1])
+
+    # ─────────────────────────────────────────
     # Load judge prompt
     # ─────────────────────────────────────────
     def _load_judge_prompt(self, model_output: str, criteria: str) -> str:
@@ -217,16 +273,15 @@ class Evaluator:
                 messages = initial_messages
             else:
                 # Include input files in the first message
-                messages = [{
-                    'role':    'user',
-                    'content': [
-                        {'type': 'text',
-                         'text': task.get_prompt() + self.load_agentic_prompt(max_turns)},
-                                *task.get_input_files(embed_data=False)
-                    ]
-                }]
+                content = [
+                    {'type': 'text',
+                     'text': task.get_prompt() + self.load_agentic_prompt(max_turns)},
+                    *task.get_input_files(embed_data=False)
+                ]
+                messages = [{'role': 'user', 'content': content}]
 
             for turn in range(start_turn, max_turns):
+                self._apply_cache_breakpoint(messages, model)
                 try:
                     response = self._litellm_completion_with_retry(
                         model       = model,
@@ -251,6 +306,8 @@ class Evaluator:
                     )
                 message = response.choices[0].message
                 self._print_thinking(message.model_dump())
+                #self._print_cache_usage(response)
+                print(response.usage)
 
                 # No tool calls — model finished analysis, ask for summary
                 if not message.tool_calls:
@@ -270,6 +327,7 @@ class Evaluator:
                         ]
                     })
 
+                    self._apply_cache_breakpoint(messages, model)
                     summary = self._litellm_completion_with_retry(
                         model       = model,
                         messages    = messages,
@@ -393,6 +451,7 @@ class Evaluator:
                 ]
             })
 
+            self._apply_cache_breakpoint(messages, model)
             summary = self._litellm_completion_with_retry(
                 model       = model,
                 messages    = messages,

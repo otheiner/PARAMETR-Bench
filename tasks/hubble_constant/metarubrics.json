@@ -6,7 +6,7 @@
             "dimension": "instructions following",
             "name": "Included summary section",
             "description": "Did the model include SUMMARY section in its response?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "no_of_galaxies",
@@ -54,7 +54,7 @@
             "dimension": "instructions following",
             "name": "Included Hubble constant section",
             "description": "Did the model include HUBBLE CONSTANT section in its response?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "h_estimation",

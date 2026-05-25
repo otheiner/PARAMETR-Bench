@@ -6,7 +6,7 @@
             "dimension": "instructions following",
             "name": "Included sections for QA",
             "description": "Did the model include the DATA FOR QUALITY ASSURANCE  section?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "faulty_supplies",
@@ -54,7 +54,7 @@
             "dimension": "instructions following",
             "name": "Included sections for management",
             "description": "Did the model include the DATA FOR MANAGEMENT  section?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "faulty_machines",

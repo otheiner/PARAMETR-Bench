@@ -6,7 +6,7 @@
             "dimension": "instructions following",
             "name": "Analysis summary",
             "description": "Did the model provide a summary of the invariant mass reconstructions in the SUMMARY section?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "detector_dimensions",
@@ -14,7 +14,7 @@
             "dimension": "image data extraction",
             "name": "Detector dimensions retrieval",
             "description": "Did the model identify that the {layer} has radius {radius:.3f} m?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "no_of_particles",

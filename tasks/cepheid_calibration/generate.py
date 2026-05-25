@@ -45,7 +45,7 @@ class CepheidCalibration(Task):
             intensity += self.gaussian(wavelength, float(mu), sigma=0.1, amplitude=amp)
         intensity /= intensity.max()
 
-        fig, ax = plt.subplots(figsize=(14, 4))
+        fig, ax = plt.subplots(figsize=(14, 2), dpi=150)
         ax.plot(wavelength, intensity, color='white', linewidth=0.8)
         ax.fill_between(wavelength, intensity, alpha=0.4, color='cyan')
         ax.set_facecolor('black')
@@ -68,8 +68,11 @@ class CepheidCalibration(Task):
         ax.set_ylim(0, 1.05)
 
         plt.tight_layout()
-        plt.savefig(f"{save_to}/{name}.png", dpi=150, bbox_inches="tight",
-                    facecolor=fig.get_facecolor())
+        fig.canvas.draw()
+        rgb = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+        rgb = rgb.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        gray = np.dot(rgb, [0.299, 0.587, 0.114]).astype(np.uint8)
+        plt.imsave(f"{save_to}/{name}.png", gray, cmap='gray', vmin=0, vmax=255)
         plt.close()
     
     # ###########################################################

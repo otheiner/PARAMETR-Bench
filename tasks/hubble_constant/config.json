@@ -24,9 +24,9 @@
             "N_GALAXIES": 4000,
             "CEPHEID_GENERATE_PROBABILITY": 0.25,
             "GALAXY_GENERATE_PROBABILITY": 0.03,
-            "Z_TOLERANCE_BAND" : 0.0002,
+            "Z_TOLERANCE_BAND" : 0.00025,
             "H_TOLERANCE_RELATIVE" : 0.005,
-            "H_STDEV_TOLERANCE_RELATIVE" : 0.2,
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.1,
             "LINE_VISIBLE_PROBABILITY" : 0.35
         }
     },

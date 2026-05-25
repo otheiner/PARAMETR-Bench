@@ -326,7 +326,6 @@ class Evaluator:
                             }
                         ]
                     })
-
                     self._apply_cache_breakpoint(messages, model)
                     summary = self._litellm_completion_with_retry(
                         model       = model,
@@ -446,12 +445,12 @@ class Evaluator:
                             'Maximum tool calls reached. State your final results '
                             'explicitly following the output format specified in the '
                             'task instructions based on what you have found so far.'
+                            'Only the following message is what is is shown to the user.'
                         )
                     }
                 ]
             })
 
-            self._apply_cache_breakpoint(messages, model)
             summary = self._litellm_completion_with_retry(
                 model       = model,
                 messages    = messages,

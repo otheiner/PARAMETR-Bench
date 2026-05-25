@@ -207,7 +207,7 @@ def _aggregate_results(run_dir: Path, model: str, judge: str,
             json.dump({'incomplete': incomplete}, f, indent=2)
         run_id = run_dir.name.split('_')[0]
         print(f"\n⚠  {len(incomplete)} task(s) incomplete — retry with:\n"
-              f"   python run.py --continue-run {run_id}")
+              f"   python3 run.py --continue-run {run_id}")
     else:
         incomplete_path.unlink(missing_ok=True)
 
@@ -259,12 +259,12 @@ def main():
                 if hash_changed:
                     print(f"✗ Repo commit has changed since run '{run_id}' was started.")
                     print(f"  Checkout the original commit before continuing and then call this command again:")
-                    print(f"        git checkout {params.get('git_commit')} && python run.py --continue-run {run_id}")
+                    print(f"        git checkout {params.get('git_commit')} && python3 run.py --continue-run {run_id}")
                 elif dirty:
                     print(f"✗ Working tree has uncommitted changes.")
                     print(f"  Commit or stash your changes before continuing.")
                 print(f"  Or skip these checks (results may differ):")
-                print(f"        python run.py --continue-run {run_id}:force")
+                print(f"        python3 run.py --continue-run {run_id}:force")
                 sys.exit(1)
         model      = params['model']
         judge      = params['judge']
@@ -481,7 +481,7 @@ def main():
                         dest_dir     = dest_dir,
                     )
                 except Exception as e:
-                    print(f"✗ Judge failed [{task_name} / seed {seed} / {model}]: {e}")
+                    print(f"✗ Judge failed [{model}/{task_name}/{seed}]: {e}")
                     failures.append({'step': 'judge', 'task': task_name, 'seed': seed, 'model': model, 'reason': str(e)})
 
             # ── Clean up partial state if task completed fully ────

@@ -130,6 +130,7 @@ class HubbleConstant(Task):
         Z_MAX = self.get_params()['Z_MAX'] #Maximum redshift of the simulated galaxies
         CEPHEID_GENERATE_PROBABILITY = self.get_params()['CEPHEID_GENERATE_PROBABILITY'] #Probability of generating a Cepheid for a given galaxy
         GALAXY_GENERATE_PROBABILITY = self.get_params()['GALAXY_GENERATE_PROBABILITY'] #Probability of generating measurement of observed emission spectrtum.
+        LINE_VISIBLE_PROBABILITY = self.get_params()['LINE_VISIBLE_PROBABILITY'] #Probability of a given spectral line being visible in the observed spectrum (e.g. due to noise, sensitivity of the instrument, etc.)
 
         # Laboratory spectrum
         LAMBDA_MIN = self.get_params()['LAMBDA_MIN']  # nm
@@ -190,7 +191,6 @@ class HubbleConstant(Task):
 
             if np.random.uniform(0,1) < GALAXY_GENERATE_PROBABILITY:
                 z = random.uniform(0.2,1) * Z_MAX
-                LINE_VISIBLE_PROBABILITY = 0.5
                 spectrum = {}
 
                 for line in LAB_SPECTRUM.keys():

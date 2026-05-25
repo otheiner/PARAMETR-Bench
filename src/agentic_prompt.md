@@ -18,6 +18,7 @@ Each `execute_python` call runs in a fresh Python process — no variables or im
 ### Constraints
 - You have at most {max_turns} tool calls.
 - Each `execute_python` and `run_command` call has a **120-second timeout** — scripts that exceed this will be killed. Keep computations efficient and avoid long-running loops.
+- You can issue multiple tool calls in a single turn — use this to run independent operations in parallel and conserve your turn budget.
 - Plan before executing and use your turn efficiently
 - Inspecting data structure before starting the analysis is recommended
 

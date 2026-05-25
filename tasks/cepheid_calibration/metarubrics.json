@@ -54,7 +54,7 @@
             "dimension": "scientific reasoning",
             "name": "Estimated 'b'",
             "description": "Did the model estimate parameter 'b' as {b}, or value strictly inside interval {b_allowed_interval}?",
-            "weight": 1.0
+            "weight": 10.0
         },
         {
             "key": "estimated_b_sigma",

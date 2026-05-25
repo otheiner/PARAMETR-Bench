@@ -35,10 +35,10 @@
     },
 
     "fixed_parameters": {
-        "M_MIN": 10,
-        "M_MAX": 80,
-        "M_SIG_MIN": 25,
-        "M_SIG_MAX": 65,
+        "M_MIN": 5,
+        "M_MAX": 85,
+        "M_SIG_MIN": 20,
+        "M_SIG_MAX": 70,
         "PT_SCALE": 10.0,
         "ETA_MAX": 3.0,
         "DAUGHTER_MASS": 0.000511,

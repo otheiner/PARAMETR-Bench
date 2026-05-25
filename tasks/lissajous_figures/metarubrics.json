@@ -62,7 +62,7 @@
             "dimension": "data handling",
             "name": "Identified faulty machines",
             "description": "Did the model list machine {machine} as faulty in MACHINES(failure > 10%) in DATA FOR MANAGEMENT  section?",
-            "weight": 4.0
+            "weight": 2.0
         },
         {
             "key": "not_faulty_machines",
@@ -70,7 +70,7 @@
             "dimension": "data handling",
             "name": "Skipped not faulty machines",
             "description": "Did the model not include machine {machine} in the MACHINES(failure > 10%) section??",
-            "weight": 4.0
+            "weight": 2.0
         }
     ]
 }

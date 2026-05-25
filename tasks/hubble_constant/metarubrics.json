@@ -38,7 +38,7 @@
             "dimension": "scientific reasoning",
             "name": "Fitted function - linear",
             "description": "Did the model state that it fitted a linear function?",
-            "weight": 5.0
+            "weight": 1.0
         },
         {
             "key": "fit_function_offse",
@@ -46,7 +46,7 @@
             "dimension": "scientific reasoning",
             "name": "Fitted function - zero offset",
             "description": "Did the model state that the linear function it fitted has zero offset, or claimed semantically equivalent information?",
-            "weight": 4.0
+            "weight": 2.0
         },
         {
             "key": "hubble_section",

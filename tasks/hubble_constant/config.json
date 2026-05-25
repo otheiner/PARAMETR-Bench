@@ -29,7 +29,7 @@
     },
 
     "fixed_parameters": {
-        "c": 67,
+        "c": 299792,
         "Z_MAX" : 0.05,
         "SIGMA_DISTANCE_CEPHEIDS" : 0.1,
         "H_DISTR_MEAN": 60,

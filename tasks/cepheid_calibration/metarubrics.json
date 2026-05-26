@@ -9,6 +9,14 @@
             "weight": 2.0
         },
         {
+            "key": "cepheids_without_data",
+            "source": "excluded_cepheids",
+            "dimension": "data handling",
+            "name": "Did not list Cepheids without data",
+            "description": "Did the model not include Cepheid {cepheid_ID} in the list with measured redshift?",
+            "weight": 2.0
+        },
+        {
             "key": "estimated_redshifts",
             "source": "redshifts",
             "dimension": "image data extraction",

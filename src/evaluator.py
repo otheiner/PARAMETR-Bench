@@ -681,7 +681,7 @@ class Evaluator:
         'mkdir', 'touch', 'cp', 'cd',
     }
 
-    def _run_command(self, command: str, session_dir: Path) -> str:
+    def _run_command(self, command: str, session_dir: Path, max_chars: int = 5_000) -> str:
         for segment in re.split(r'\|\||&&|[|;]', command):
             tokens = segment.strip().split()
             if not tokens:
@@ -689,7 +689,10 @@ class Evaluator:
             if tokens[0] not in self._ALLOWED_COMMANDS:
                 allowed = ', '.join(sorted(self._ALLOWED_COMMANDS))
                 return f"Error: '{tokens[0]}' is not allowed. Allowed commands: {allowed}."
-        return self._run_in_sandbox(['sh', '-c', command], session_dir)
+        result = self._run_in_sandbox(['sh', '-c', command], session_dir)
+        if len(result) > max_chars:
+            result = result[:max_chars] + f"\n...(truncated at {max_chars} chars)"
+        return result
 
     # ─────────────────────────────────────────
     # Write text file on agents request
@@ -706,14 +709,17 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Read text/csv file on agents request
     # ─────────────────────────────────────────
-    def _read_file(self, path: str, session_dir: Path) -> str:
+    def _read_file(self, path: str, session_dir: Path, max_chars: int = 10_000) -> str:
         file_path = session_dir / path
         if not file_path.exists():
             return f"Error: '{path}' not found in workspace."
         try:
-            return file_path.read_text()
+            content = file_path.read_text()
         except Exception as e:
             return f"Error reading '{path}': {e}"
+        if len(content) > max_chars:
+            content = content[:max_chars] + f"\n...(truncated at {max_chars} chars)"
+        return content
 
     # View image on agents request
     # ─────────────────────────────────────────

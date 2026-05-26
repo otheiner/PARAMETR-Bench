@@ -17,6 +17,14 @@
             "weight": 2.0
         },
         {
+            "key": "notfaulty_supplies",
+            "source": "complement_qa_data",
+            "dimension": "data handling",
+            "name": "Skipped not faulty supplies",
+            "description": "Did the model not include supply {supply_ID} in the list of faulty supplies in DATA FOR QUALITY ASSURANCE  section?",
+            "weight": 2.0
+        },
+        {
             "key": "supplies_frequency",
             "source": "qa_data",
             "dimension": "image data extraction",
@@ -54,6 +62,14 @@
             "dimension": "data handling",
             "name": "Identified faulty machines",
             "description": "Did the model list machine {machine} as faulty in MACHINES(failure > 10%) in DATA FOR MANAGEMENT  section?",
+            "weight": 2.0
+        },
+        {
+            "key": "not_faulty_machines",
+            "source": "not_faulty_machines",
+            "dimension": "data handling",
+            "name": "Skipped not faulty machines",
+            "description": "Did the model not include machine {machine} in the MACHINES(failure > 10%) section?",
             "weight": 2.0
         }
     ]

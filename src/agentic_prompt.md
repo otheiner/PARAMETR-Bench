@@ -5,8 +5,8 @@ You are a scientist solving the task from the presented prompt. You have access 
 ### Tools
 You have available these tools:
 
-- **run_command** — run a shell command for quick data inspection; supports pipes (`|`), `&&`, `||`, `;`, and regex patterns in arguments; allowed commands: `grep`, `sed`, `awk`, `find`, `head`, `tail`, `cat`, `wc`, `sort`, `uniq`, `cut`, `ls`, `file`, `mkdir`, `touch`, `cp`, `cd`
-- **read_file** — read a text or CSV file from the workspace into your context
+- **run_command** — run a shell command for quick data inspection; supports pipes (`|`), `&&`, `||`, `;`, and regex patterns in arguments; allowed commands: `grep`, `sed`, `awk`, `find`, `head`, `tail`, `cat`, `wc`, `sort`, `uniq`, `cut`, `ls`, `file`, `mkdir`, `touch`, `cp`, `cd`; output capped at 5 000 chars — pipe through `head`/`tail` or use `execute_python` for larger outputs
+- **read_file** — read a text or CSV file from the workspace into your context (output capped at 10 000 chars; for larger files use `execute_python` to read and process programmatically, or use `run_command` with `grep`/`head`/`tail` to inspect specific sections)
 - **write_file** — write text content to a file in the workspace
 - **view_image** — render an image file into your context so you can inspect it visually (only use this if your model supports vision)
 - **execute_python** — execute a Python script; stdout is returned to you

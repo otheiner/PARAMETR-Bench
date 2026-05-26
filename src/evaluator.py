@@ -178,6 +178,29 @@ class Evaluator:
             mark_last_text_block(messages[-1])
 
     # ─────────────────────────────────────────
+    # Strip base64 image data from old view_image 
+    # tool results when context window is exceeded.
+    # ─────────────────────────────────────────
+    def _strip_old_images(self, messages: list) -> None:
+        """Replace base64 image data in old view_image results with a placeholder.
+        Called only when context window is exceeded; keeps images from the last turn intact."""
+        # Find the start of the last turn: the last assistant message that had tool calls
+        last_turn_start = 0
+        for i, m in enumerate(messages):
+            if m.get('role') == 'assistant' and m.get('tool_calls'):
+                last_turn_start = i
+
+        for i, m in enumerate(messages):
+            if i >= last_turn_start:
+                break
+            if m.get('name') == 'view_image' and isinstance(m.get('content'), list):
+                messages[i]['content'] = [
+                    b if b.get('type') != 'image_url'
+                    else {'type': 'text', 'text': '[image data removed to save context]'}
+                    for b in messages[i]['content']
+                ]
+
+    # ─────────────────────────────────────────
     # Load judge prompt
     # ─────────────────────────────────────────
     def _load_judge_prompt(self, model_output: str, criteria: str) -> str:
@@ -283,12 +306,22 @@ class Evaluator:
             for turn in range(start_turn, max_turns):
                 self._apply_cache_breakpoint(messages, model)
                 try:
-                    response = self._litellm_completion_with_retry(
-                        model       = model,
-                        messages    = messages,
-                        tools       = TOOLS,
-                        temperature = 0.0,
-                    )
+                    try:
+                        response = self._litellm_completion_with_retry(
+                            model       = model,
+                            messages    = messages,
+                            tools       = TOOLS,
+                            temperature = 0.0,
+                        )
+                    except litellm.ContextWindowExceededError:
+                        print("⚠  Context window exceeded — stripping old images and retrying")
+                        self._strip_old_images(messages)
+                        response = self._litellm_completion_with_retry(
+                            model       = model,
+                            messages    = messages,
+                            tools       = TOOLS,
+                            temperature = 0.0,
+                        )
                 except Exception:
                     # Save partial state so the run can be resumed with --continue-run
                     partial_path = dest_dir / '_partial_model_response.json'

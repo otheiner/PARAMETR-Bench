@@ -423,8 +423,6 @@ class InvariantMassReconstruction(Task):
     # ---------------------------------------------------------------------------
     def _generate(self):
         """
-
-
         Conventions
         -----------
         - Lengths in m, momenta/energies in GeV, magnetic field in tesla.

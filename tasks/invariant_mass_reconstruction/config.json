@@ -29,7 +29,7 @@
             "LAYER_RADII": [0.05, 0.15, 0.30, 0.55],
             "MEAN_GAMMA_SIGNAL" : 1,
             "MASS_TOLERANCE" : 0.005,
-            "WIDTH_TOLERANCE" : 0.3,
+            "WIDTH_TOLERANCE" : 0.5,
             "PER-EVENT_MASS_TOLERANCE" : 0.001
         }
     },

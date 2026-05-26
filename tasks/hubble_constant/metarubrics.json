@@ -22,7 +22,7 @@
             "dimension": "instructions following",
             "name": "Listed section measured redshifts",
             "description": "Did the model include REDSHIFTS OF GALAXIES USED IN THE ANALYSIS section in its response?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "z_estimation",

@@ -30,7 +30,7 @@
             "dimension": "scientific reasoning",
             "name": "Per-event invariant mass reconstruction",
             "description": "Did the model reconstruct invariant mass of a parent particle in event {event_id} as {mass:.2f} GeV or value in range [{mass_min:.2f}, {mass_max:.2f}] GeV?",
-            "weight": 4.0
+            "weight": 5.0
         },
         {
             "key": "final_result_mass",
@@ -38,7 +38,7 @@
             "dimension": "instructions following",
             "name": "Final result existence - mass",
             "description": "Did the model state the mass of the unknown particle in the FINAL RESULTS section?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "new_particle_mass",
@@ -54,7 +54,7 @@
             "dimension": "instructions following",
             "name": "Final result existence - decay width",
             "description": "Did the model state the decay width of the unknown particle in the FINAL RESULTS section?",
-            "weight": 1.0
+            "weight": 0.5
         },
         {
             "key": "new_particle_decay_width",

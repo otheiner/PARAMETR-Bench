@@ -14,7 +14,7 @@ from src.utils import get_git_hash
 from src.tools import TOOLS, _load_sandbox_libraries
 
 import litellm
-litellm.request_timeout = 300
+litellm.timeout = 300
 litellm.modify_params = True   # inject dummy tool when history has tool-use but tools= is omitted
 #litellm._turn_on_debug()
 
@@ -99,7 +99,7 @@ class Evaluator:
     def _litellm_completion_with_retry(self, **kwargs):
         for attempt in range(3):
             try:
-                return litellm.completion(**kwargs, request_timeout=300)
+                return litellm.completion(**kwargs, timeout=300)
             except (litellm.ServiceUnavailableError,
                     litellm.RateLimitError,
                     litellm.InternalServerError,

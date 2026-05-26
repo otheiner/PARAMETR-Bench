@@ -53,7 +53,7 @@
             "source": "none",
             "dimension": "instructions following",
             "name": "Included sections for management",
-            "description": "Did the model include the DATA FOR MANAGEMENT  section?",
+            "description": "Did the model include the DATA FOR MANAGEMENT section?",
             "weight": 0.5
         },
         {

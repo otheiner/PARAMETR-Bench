@@ -22,7 +22,7 @@
             "dimension": "scientific reasoning",
             "name": "Fitted function form",
             "description": "Did the model fit into a data linear function with offset and the slope as free parameters?",
-            "weight": 3.0
+            "weight": 1.0
         },
         {
             "key": "estimated_a",

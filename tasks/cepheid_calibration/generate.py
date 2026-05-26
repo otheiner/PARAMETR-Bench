@@ -10,6 +10,7 @@ import numpy as np
 import random
 import math
 import string
+import io
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -46,8 +47,8 @@ class CepheidCalibration(Task):
         intensity /= intensity.max()
 
         fig, ax = plt.subplots(figsize=(14, 2), dpi=150)
-        ax.plot(wavelength, intensity, color='white', linewidth=0.8)
-        ax.fill_between(wavelength, intensity, alpha=0.4, color='cyan')
+        ax.plot(wavelength, intensity, color='white', linewidth=0.5)
+        ax.fill_between(wavelength, intensity, alpha=0.3, color='cyan')
         ax.set_facecolor('black')
         fig.patch.set_facecolor('black')
 
@@ -68,12 +69,14 @@ class CepheidCalibration(Task):
         ax.set_ylim(0, 1.05)
 
         plt.tight_layout()
-        fig.canvas.draw()
-        rgb = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-        rgb = rgb.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        gray = np.dot(rgb, [0.299, 0.587, 0.114]).astype(np.uint8)
-        plt.imsave(f"{save_to}/{name}.png", gray, cmap='gray', vmin=0, vmax=255)
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight',
+                    facecolor=fig.get_facecolor())
         plt.close()
+        buf.seek(0)
+        rgba = plt.imread(buf)
+        gray = np.dot(rgba[:, :, :3], [0.299, 0.587, 0.114])
+        plt.imsave(f"{save_to}/{name}.png", gray, cmap='gray', vmin=0, vmax=1)
     
     # ###########################################################
     # # Function simulating reading error to experimentally estimate

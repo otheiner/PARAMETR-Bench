@@ -579,15 +579,29 @@ class Evaluator:
         return 'YES' if raw.startswith('YES') else 'NO'
 
     # ─────────────────────────────────────────
-    # Batch rubrics in one metarubric
+    # Batch rubrics in one metarubric and split into 
+    # chunks if too many for the judge to handle reliably
     # ─────────────────────────────────────────
+
     def _judge_batch(self, rubrics: list[str],
                      model_output: str,
                      judge: str) -> tuple[int, list[dict]]:
         """
-        All rubrics in one call — for capable API models.
+        Rubrics in chunked calls — for capable API models.
         Returns (passed count, [{criterion, verdict}, ...]) where verdict is 'YES' or 'NO'.
         """
+        JUDGE_CHUNK_SIZE = 50  # max rubrics per API call to avoid judge miscounts
+
+        all_verdicts: list[dict] = []
+        for start in range(0, len(rubrics), JUDGE_CHUNK_SIZE):
+            chunk = rubrics[start:start + JUDGE_CHUNK_SIZE]
+            all_verdicts.extend(self._judge_chunk(chunk, model_output, judge))
+        return sum(1 for v in all_verdicts if v['verdict'] == 'YES'), all_verdicts
+
+    def _judge_chunk(self, rubrics: list[str],
+                     model_output: str,
+                     judge: str) -> list[dict]:
+        """One API call for a chunk of rubrics. Returns [{criterion, verdict}, ...]."""
         numbered = '\n'.join(f"{i+1}. {r}" for i, r in enumerate(rubrics))
         prompt   = self._load_judge_prompt(model_output=model_output, criteria=numbered)
 
@@ -610,11 +624,10 @@ class Evaluator:
                 f"Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics"
             )
 
-        rubric_verdicts = [
+        return [
             {'criterion': r, 'verdict': 'YES' if v else 'NO'}
             for r, v in zip(rubrics, verdicts)
         ]
-        return sum(1 for v in verdicts if v), rubric_verdicts
 
     # ─────────────────────────────────────────
     # Shared Docker sandbox runner

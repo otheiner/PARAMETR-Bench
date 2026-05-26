@@ -60,7 +60,7 @@
             "key": "new_particle_decay_width",
             "source": "new_particle_properties",
             "dimension": "scientific reasoning",
-            "name": "Decay width$",
+            "name": "Decay width",
             "description": "Did the model estimate the decay width of new particle as {particle_width:.2f} GeV/c^2, or value in range [{particle_width_min:.2f}, {particle_width_max:.2f}] GeV/c^2?",
             "weight": 10.0
         }

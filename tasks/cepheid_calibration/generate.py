@@ -321,9 +321,9 @@ class CepheidCalibration(Task):
         se_inter  = np.sqrt(s2 * (1/n + x.mean()**2 / sxx))
 
         a_allowed_interval = f"[{slope-RESULTS_A_B_TOLERANCE:.2f}, {slope+RESULTS_A_B_TOLERANCE:.2f}]"
-        a_sigma_allowed_interval = f"[{se_slope-RESULTS_A_B_TOLERANCE:.2f}, {se_slope+RESULTS_A_B_TOLERANCE:.2f}]"
+        a_sigma_allowed_interval = f"[{max(0.0, se_slope-RESULTS_A_B_TOLERANCE):.2f}, {se_slope+RESULTS_A_B_TOLERANCE:.2f}]"
         b_allowed_interval = f"[{intercept-RESULTS_A_B_TOLERANCE:.2f}, {intercept+RESULTS_A_B_TOLERANCE:.2f}]"
-        b_sigma_allowed_interval = f"[{se_inter-RESULTS_A_B_TOLERANCE:.2f}, {se_inter+RESULTS_A_B_TOLERANCE:.2f}]"
+        b_sigma_allowed_interval = f"[{max(0.0, se_inter-RESULTS_A_B_TOLERANCE):.2f}, {se_inter+RESULTS_A_B_TOLERANCE:.2f}]"
 
         results_row = pd.DataFrame([{'a' : slope,
                                     'a_allowed_interval' : a_allowed_interval,

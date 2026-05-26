@@ -29,7 +29,7 @@
             "source": "results",
             "dimension": "scientific reasoning",
             "name": "Estimated 'a'",
-            "description": "Did the model estimate parameter 'a' as {a}, or value strictly inside interval {a_allowed_interval}?",
+            "description": "Did the model estimate parameter 'a' as {a:.2f}, or value strictly inside interval {a_allowed_interval}?",
             "weight": 10.0
         },
         {
@@ -37,7 +37,7 @@
             "source": "results",
             "dimension": "scientific reasoning",
             "name": "Estimated 'sigma_a'",
-            "description": "Did the model estimate uncertainty of parameter 'a' as {a_sigma}, or value strictly inside interval {a_sigma_allowed_interval} (e.g. stating the result in format a: {a_sigma} ± {a_sigma_allowed_interval} where the second number is the uncertainty, or semantically equivalent statement)?",
+            "description": "Did the model estimate uncertainty of parameter 'a' as {a_sigma:.2f}, or value strictly inside interval {a_sigma_allowed_interval} (e.g. stating the result in format a: {a:.2f} ± {a_sigma:.2f} where the second number is the uncertainty, or semantically equivalent statement)?",
             "weight": 8.0
         },
         {
@@ -45,7 +45,7 @@
             "source": "results",
             "dimension": "scientific reasoning",
             "name": "Estimated 'b'",
-            "description": "Did the model estimate parameter 'b' as {b}, or value strictly inside interval {b_allowed_interval}?",
+            "description": "Did the model estimate parameter 'b' as {b:.2f}, or value strictly inside interval {b_allowed_interval}?",
             "weight": 10.0
         },
         {
@@ -53,7 +53,7 @@
             "source": "results",
             "dimension": "scientific reasoning",
             "name": "Estimated 'sigma_b'",
-            "description": "Did the model estimate uncertainty of parameter 'b' as {b_sigma}, or value strictly inside interval {b_sigma_allowed_interval} (e.g. stating the result in format b: {b_sigma} ± {b_sigma_allowed_interval} where the second number is the uncertainty, or semantically equivalent statement)?",
+            "description": "Did the model estimate uncertainty of parameter 'b' as {b_sigma:.2f}, or value strictly inside interval {b_sigma_allowed_interval} (e.g. stating the result in format b: {b:.2f} ± {b_sigma:.2f} where the second number is the uncertainty, or semantically equivalent statement)?",
             "weight": 8.0
         }
     ]

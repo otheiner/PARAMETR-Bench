@@ -12,7 +12,7 @@ $$v_{\text{rec}} = H_0 \cdot d$$
 
 across the whole provided dataset, with $H_0 = 67\\,\text{km}\\,\text{s}^{-1}\\,\text{Mpc}^{-1}$. Estimate galaxy redshifts (assumed to be same as the redshift of the Cepheid) using template cross-correlation in log-$\lambda$ space. Since the redshifts are small, assume the classical formula for the redshift. The laboratory reference spectrum is provided together with the dataset.
 
-Use the provided data to estimate numeric values of parameters $a$ and $b$ in the formula relating period of Cepheid and its absolute magnitude. The estimated values has to be based on the data from the provided dataset. In your results include statistical uncertainties on your estimates. Also, for each Cepheid used in the analysis, state its measured redshift.
+Use the provided data to estimate numeric values of parameters $a$ and $b$ in the formula relating period of Cepheid and its absolute magnitude. The estimated values have to be based on the data from the provided dataset. In your results include statistical uncertainties on your estimates. Also, for each Cepheid used in the analysis, state its measured redshift.
 
 ________________________________________
 ## Output format
@@ -32,12 +32,12 @@ CEPHEID_ID , REDSHIFT
 
 PARAMETER a:
 [a_value]
-UNCERTAINTY ON PARAMETR a:
+UNCERTAINTY ON PARAMETER a:
 [stdev_a]
 
 PARAMETER b:
 [b_value]
-UNCERTAINTY ON PARAMETR b:
+UNCERTAINTY ON PARAMETER b:
 [stdev_b]
 
 ________________________________________

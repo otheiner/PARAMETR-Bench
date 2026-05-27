@@ -41,7 +41,7 @@
             "weight": 1.0
         },
         {
-            "key": "fit_function_offse",
+            "key": "fit_function_offset",
             "source": "none",
             "dimension": "scientific reasoning",
             "name": "Fitted function - zero offset",
@@ -61,7 +61,7 @@
             "source": "results",
             "dimension": "scientific reasoning",
             "name": "Hubble constant estimation",
-            "description": "Did the model compute that Hubble constant as {hubble_constant} km/s/Mpc, or value strictly inside interval [{hubble_constant_min}, {hubble_constant_max}] km/s/Mpc?",
+            "description": "Did the model compute that the Hubble constant as {hubble_constant} km/s/Mpc, or value strictly inside interval [{hubble_constant_min}, {hubble_constant_max}] km/s/Mpc?",
             "weight": 8.0
         },
         {

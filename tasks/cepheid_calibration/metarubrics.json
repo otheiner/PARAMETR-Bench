@@ -21,7 +21,7 @@
             "source": "results",
             "dimension": "scientific reasoning",
             "name": "Fitted function form",
-            "description": "Did the model fit into a data linear function with offset and the slope as free parameters?",
+            "description": "Did the model fit into the data linear function with offset and the slope as free parameters?",
             "weight": 1.0
         },
         {

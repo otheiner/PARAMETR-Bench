@@ -29,7 +29,7 @@
             "source": "qa_data",
             "dimension": "image data extraction",
             "name": "Computed frequency of faulty supply",
-            "description": "Did the model list that supply {supply_ID} has frequency {frequency} Hz in DATA FOR QUALITY ASSURANCE  section, or an equivalent value when rounded to the closest integer?",
+            "description": "Did the model list that supply {supply_ID} has frequency {frequency} Hz in DATA FOR QUALITY ASSURANCE section, or an equivalent value when rounded to the closest integer?",
             "weight": 8.0
         },
         {
@@ -37,7 +37,7 @@
             "source": "qa_data",
             "dimension": "data handling",
             "name": "Listed batch of supply",
-            "description": "Did the model list that supply {supply_ID} was manufactured in batch {batch} in DATA FOR QUALITY ASSURANCE  section?",
+            "description": "Did the model list that supply {supply_ID} was manufactured in batch {batch} in DATA FOR QUALITY ASSURANCE section?",
             "weight": 4.0
         },
         {
@@ -61,7 +61,7 @@
             "source": "faulty_machines",
             "dimension": "data handling",
             "name": "Identified faulty machines",
-            "description": "Did the model list machine {machine} as faulty in MACHINES(failure > 10%) in DATA FOR MANAGEMENT  section?",
+            "description": "Did the model list machine {machine} as faulty in MACHINES(failure > 10%) in DATA FOR MANAGEMENT section?",
             "weight": 2.0
         },
         {

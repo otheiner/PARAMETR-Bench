@@ -31,10 +31,14 @@ CEPHEID_ID , REDSHIFT
 .....
 
 PARAMETER a:
-[a_value] ± [stdev_a]
+[a_value]
+UNCERTAINTY ON PARAMETR a:
+[stdev_a]
 
 PARAMETER b:
-[b_value] ± [stdev_b]
+[b_value]
+UNCERTAINTY ON PARAMETR b:
+[stdev_b]
 
 ________________________________________
 ## Files provided

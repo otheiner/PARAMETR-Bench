@@ -14,10 +14,10 @@ Example for 3 criteria: [true, false, true]
 Example for 1 criterion: [true]
 
 ## Input 
-Model response:
+**Model response:**
 {model_output}
 
-Criteria:
+**Criteria:**
 {criteria}
 
 Answer JSON array only!

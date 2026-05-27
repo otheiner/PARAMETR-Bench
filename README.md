@@ -34,7 +34,7 @@ Try the interactive task generation online or read the detailed technical blog p
 
 # Results
 
-Initial evaluations across frontier models are in progress and will be published here soon to demonstarte the framework.
+Initial evaluations across frontier models are in progress and will be published here soon to demonstrate the framework.
 
 # Motivation 
 
@@ -52,13 +52,13 @@ pip install .
 
 ## API models
 
-Run the benchmark and produce your own results (you can plug any models of your choice supported by `litellm`). How to do this is described bellow. To use API models, add your keys:
+Run the benchmark and produce your own results (you can plug any models of your choice supported by `litellm`). How to do this is described below. To use API models, add your keys:
 
 ```bash
 cp .env.example .env   # fill in your API keys to .env
 ```
 
-Framework allows non-agentic (no tools allowed) and agentic (allows running python scripts) evaluation. Details on how to run actual evaluation with or without agent is described in the following sections.
+The framework allows non-agentic (no tools allowed) and agentic (allows running python scripts) evaluation. Details on how to run actual evaluation with or without agent is described in the following sections.
 
 ## Model evaluation
 
@@ -72,7 +72,7 @@ python run.py --model gemini/gemini-3.1-flash-lite-preview \
 ```
 This sends LLM prompt and all the data in one message and LLM has one shot to return the result.
 
-**Agentic evaluation** enables performing more realistic scientific tasks. Agent gets only the prompt and list of files to work with and it has then the ability to use tools to inspect these files and analyze them by python, which is executed in safe Docker sandbox environment without access to the Internet. First of all, run docker daemon on your machine. Description of the sandbox environment and its Dockerfile is located in `sandbox` folder. 
+**Agentic evaluation** enables performing more realistic scientific tasks. Agent gets only the prompt and list of files to work with and it then has the ability to use tools to inspect these files and analyze them by python, which is executed in safe Docker sandbox environment without access to the Internet. First of all, run docker daemon on your machine. Description of the sandbox environment and its Dockerfile is located in `sandbox` folder. 
 
 Build the sandbox Docker image and run benchmark using flag `--agentic`:
 

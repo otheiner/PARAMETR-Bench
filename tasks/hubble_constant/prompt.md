@@ -31,6 +31,6 @@ ________________________________________
 
 Files provided to solve the task are:
 
-- `[cepheids_measurements.csv]` — database of measured Cepheids
-- `[spectral_lines_lab.png]` — laboratory emission spectrum
-- `<observed_spectra/>` — folder containing observed emission spectra of some galaxies
+- `cepheids_measurements.csv` — database of measured Cepheids
+- `spectral_lines_lab.png` — laboratory emission spectrum
+- `observed_spectra/` — folder containing observed emission spectra of some galaxies

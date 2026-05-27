@@ -21,7 +21,7 @@
             "source": "misc",
             "dimension": "instructions following",
             "name": "Number of events in the list",
-            "description": "Did the model list exactly {no_of_events_in_the_list} events in the INTERMEDIATE RESULTS PER EVENT section?",
+            "description": "Did the model list exactly {no_of_events_in_the_list} events in the INTERMEDIATE RESULTS FOR EVERY EVENT section?",
             "weight": 1.0
         },
         {
@@ -45,7 +45,7 @@
             "source": "new_particle_properties",
             "dimension": "scientific reasoning",
             "name": "Particle mass M",
-            "description": "Did the model estimate the mass of the new particle as {particle_mass:.2f} GeV/c^2, or value in range [{particle_mass_min:.2f}, {particle_mass_max:.2f}] GeV/c²?",
+            "description": "Did the model estimate the mass of the new particle as {particle_mass:.2f} GeV/c^2, or value in range [{particle_mass_min:.2f}, {particle_mass_max:.2f}] GeV/c^2?",
             "weight": 10.0
         },
         {

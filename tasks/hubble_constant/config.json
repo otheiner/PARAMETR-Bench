@@ -3,33 +3,36 @@
 
     "difficulties": {
         "easy": {
-            "N_GALAXIES": 10,
+            "N_GALAXIES": 5,
             "CEPHEID_GENERATE_PROBABILITY": 1,
             "GALAXY_GENERATE_PROBABILITY": 1,
             "Z_TOLERANCE_BAND" : 0.0012,
             "H_TOLERANCE_RELATIVE" : 0.1,
-            "H_STDEV_TOLERANCE_RELATIVE" : 1
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.8,
+            "LINE_VISIBLE_PROBABILITY" : 1
         },
         "medium": {
             "N_GALAXIES": 300,
             "CEPHEID_GENERATE_PROBABILITY": 0.5,
             "GALAXY_GENERATE_PROBABILITY": 0.1,
-            "Z_TOLERANCE_BAND" : 0.0005,
-            "H_TOLERANCE_RELATIVE" : 0.05,
-            "H_STDEV_TOLERANCE_RELATIVE" : 0.5
+            "Z_TOLERANCE_BAND" : 0.0004,
+            "H_TOLERANCE_RELATIVE" : 0.01,
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.5,
+            "LINE_VISIBLE_PROBABILITY" : 0.5
         },
         "hard": {
             "N_GALAXIES": 4000,
             "CEPHEID_GENERATE_PROBABILITY": 0.25,
             "GALAXY_GENERATE_PROBABILITY": 0.03,
-            "Z_TOLERANCE_BAND" : 0.0004,
-            "H_TOLERANCE_RELATIVE" : 0.02,
-            "H_STDEV_TOLERANCE_RELATIVE" : 0.2
+            "Z_TOLERANCE_BAND" : 0.00025,
+            "H_TOLERANCE_RELATIVE" : 0.005,
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.1,
+            "LINE_VISIBLE_PROBABILITY" : 0.35
         }
     },
 
     "fixed_parameters": {
-        "c": 67,
+        "c": 299792,
         "Z_MAX" : 0.05,
         "SIGMA_DISTANCE_CEPHEIDS" : 0.1,
         "H_DISTR_MEAN": 60,

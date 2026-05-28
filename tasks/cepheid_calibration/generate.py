@@ -10,6 +10,7 @@ import numpy as np
 import random
 import math
 import string
+import io
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -45,9 +46,9 @@ class CepheidCalibration(Task):
             intensity += self.gaussian(wavelength, float(mu), sigma=0.1, amplitude=amp)
         intensity /= intensity.max()
 
-        fig, ax = plt.subplots(figsize=(14, 4))
-        ax.plot(wavelength, intensity, color='white', linewidth=0.8)
-        ax.fill_between(wavelength, intensity, alpha=0.4, color='cyan')
+        fig, ax = plt.subplots(figsize=(14, 2), dpi=150)
+        ax.plot(wavelength, intensity, color='white', linewidth=0.5)
+        ax.fill_between(wavelength, intensity, alpha=0.3, color='cyan')
         ax.set_facecolor('black')
         fig.patch.set_facecolor('black')
 
@@ -68,9 +69,14 @@ class CepheidCalibration(Task):
         ax.set_ylim(0, 1.05)
 
         plt.tight_layout()
-        plt.savefig(f"{save_to}/{name}.png", dpi=150, bbox_inches="tight",
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight',
                     facecolor=fig.get_facecolor())
         plt.close()
+        buf.seek(0)
+        rgba = plt.imread(buf)
+        gray = np.dot(rgba[:, :, :3], [0.299, 0.587, 0.114])
+        plt.imsave(f"{save_to}/{name}.png", gray, cmap='gray', vmin=0, vmax=1)
     
     # ###########################################################
     # # Function simulating reading error to experimentally estimate
@@ -315,9 +321,9 @@ class CepheidCalibration(Task):
         se_inter  = np.sqrt(s2 * (1/n + x.mean()**2 / sxx))
 
         a_allowed_interval = f"[{slope-RESULTS_A_B_TOLERANCE:.2f}, {slope+RESULTS_A_B_TOLERANCE:.2f}]"
-        a_sigma_allowed_interval = f"[{se_slope-RESULTS_A_B_TOLERANCE:.2f}, {se_slope+RESULTS_A_B_TOLERANCE:.2f}]"
+        a_sigma_allowed_interval = f"[{max(0.0, se_slope-RESULTS_A_B_TOLERANCE):.2f}, {se_slope+RESULTS_A_B_TOLERANCE:.2f}]"
         b_allowed_interval = f"[{intercept-RESULTS_A_B_TOLERANCE:.2f}, {intercept+RESULTS_A_B_TOLERANCE:.2f}]"
-        b_sigma_allowed_interval = f"[{se_inter-RESULTS_A_B_TOLERANCE:.2f}, {se_inter+RESULTS_A_B_TOLERANCE:.2f}]"
+        b_sigma_allowed_interval = f"[{max(0.0, se_inter-RESULTS_A_B_TOLERANCE):.2f}, {se_inter+RESULTS_A_B_TOLERANCE:.2f}]"
 
         results_row = pd.DataFrame([{'a' : slope,
                                     'a_allowed_interval' : a_allowed_interval,

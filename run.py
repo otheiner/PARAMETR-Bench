@@ -15,9 +15,10 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-from src.task import Task, TaskResults, BenchmarkResults
+from src.task import Task
+from src.results import TaskResults, MetarubricResult, BenchmarkResults
 from src.evaluator import Evaluator
-from src.utils import get_git_hash
+from src.utils import get_git_hash, is_working_tree_dirty
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -50,8 +51,16 @@ def parse_args():
                         help    = 'Maximum agentic turns per evaluation (default: 10).')
     parser.add_argument('--continue-run',  type = str,
                         default = None,
+                        metavar = 'RUN_ID[:force]',
+                        help    = 'Continue an existing run by its 6-character ID. '
+                                  'Append :force to skip the git commit check '
+                                  '(e.g. --continue-run abc123:force). '
+                                  'Results may not be comparable to the original run.')
+    parser.add_argument('--regrade',       type = str,
+                        default = None,
                         metavar = 'RUN_ID',
-                        help    = 'Continue an existing run by its 6-character ID.')
+                        help    = 'Re-run the judge on all completed model responses in an '
+                                  'existing run. Use --judge to specify a different judge model.')
 
     return parser.parse_args()
 
@@ -116,24 +125,70 @@ def discover_tasks(tasks_dir='tasks') -> dict:
     return discovered
 
 
+def _latest_judge_response(dest_dir: Path, judge_clean: str) -> Path | None:
+    if not dest_dir.exists():
+        return None
+    prefix = f'judge_response_{judge_clean}'
+    matches = [p for p in dest_dir.iterdir()
+               if p.name == f'{prefix}.json' or
+                  (p.name.startswith(f'{prefix}_') and p.name.endswith('.json'))]
+    return max(matches, key=lambda p: p.stat().st_mtime) if matches else None
+
+
+def _task_results_from_judge_response(dest_dir: Path, task_name: str, seed: int,
+                                       model: str, judge_clean: str) -> TaskResults | None:
+    jr_path = _latest_judge_response(dest_dir, judge_clean)
+    if jr_path is None:
+        return None
+    rubrics_path = dest_dir / 'rubrics.json'
+    if not rubrics_path.exists():
+        return None
+    with open(jr_path) as f:
+        jr = json.load(f)
+    with open(rubrics_path) as f:
+        rb = json.load(f)
+    weight_by_name = {mr['name']: mr['weight'] for mr in rb['metarubrics']}
+    return TaskResults(
+        task_name          = task_name,
+        seed               = seed,
+        difficulty         = rb['difficulty'],
+        model              = model,
+        judge              = jr['judge'],
+        git_commit         = '',
+        timestamp          = '',
+        metarubric_results = [
+            MetarubricResult(
+                metarubric_name = mr['name'],
+                dimension        = mr['dimension'],
+                total           = len(mr['rubrics']),
+                passed          = sum(1 for r in mr['rubrics'] if r['verdict'] == 'YES'),
+                weight          = weight_by_name[mr['name']],
+            )
+            for mr in jr['metarubrics']
+        ],
+    )
+
+
 def _aggregate_results(run_dir: Path, model: str, judge: str,
                         difficulty: str, seeds: list[int],
                         task_names: list[str],
-                        failures: list[dict]) -> BenchmarkResults:
-    """Load all task_results.json files and produce a BenchmarkResults."""
+                        failures: list[dict],
+                        agentic: bool = False,
+                        max_turns: int = 0) -> BenchmarkResults:
+    """Reconstruct BenchmarkResults from judge_response + rubrics files."""
     task_results = []
     incomplete   = []
 
     failure_index = {(f['task'], f['seed']): f for f in failures}
 
     model_clean = model.replace('/', '-').replace(':', '-')
+    judge_clean = judge.replace('/', '-').replace(':', '-')
     for task_name in task_names:
         for seed in seeds:
-            dest_dir          = run_dir / model_clean / task_name / str(seed)
-            task_results_path = dest_dir / 'task_results.json'
-            if task_results_path.exists():
-                with open(task_results_path) as f:
-                    task_results.append(TaskResults.from_dict(json.load(f)))
+            dest_dir = run_dir / model_clean / task_name / str(seed)
+            tr = _task_results_from_judge_response(dest_dir, task_name, seed, model, judge_clean)
+            if tr is not None:
+                task_results.append(tr)
             else:
                 entry = {'task': task_name, 'seed': seed}
                 if (task_name, seed) in failure_index:
@@ -146,13 +201,15 @@ def _aggregate_results(run_dir: Path, model: str, judge: str,
                 incomplete.append(entry)
 
     is_partial = bool(incomplete)
+    incomplete_path = run_dir / 'incomplete_tasks.json'
     if incomplete:
-        incomplete_path = run_dir / 'incomplete_tasks.json'
         with open(incomplete_path, 'w') as f:
             json.dump({'incomplete': incomplete}, f, indent=2)
         run_id = run_dir.name.split('_')[0]
         print(f"\n⚠  {len(incomplete)} task(s) incomplete — retry with:\n"
-              f"   python run.py --continue-run {run_id}")
+              f"   python3 run.py --continue-run {run_id}")
+    else:
+        incomplete_path.unlink(missing_ok=True)
 
     return BenchmarkResults(
         task_results = task_results,
@@ -162,6 +219,8 @@ def _aggregate_results(run_dir: Path, model: str, judge: str,
         seeds        = seeds,
         git_commit   = get_git_hash(),
         timestamp    = datetime.now().isoformat(),
+        agentic      = agentic,
+        max_turns    = max_turns,
         partial      = is_partial,
     )
 
@@ -181,18 +240,32 @@ def main():
 
     # ── Determine run folder and parameters ───────────────────
     if args.continue_run:
-        run_id  = args.continue_run
+        raw     = args.continue_run
+        force   = raw.endswith(':force')
+        run_id  = raw[:6]
         run_dir = find_run_dir(results_dir, run_id)
         if not run_dir.exists():
             print(f"✗ Run '{run_id}' not found in {results_dir}/")
             sys.exit(1)
         with open(run_dir / 'run_params.json') as f:
             params = json.load(f)
-        if get_git_hash() != params.get('git_commit', ''):
-            print(f"✗ Repo has changed since run '{run_id}' was started.")
-            print(f"  Checkout the original commit before continuing:")
-            print(f"    git checkout {params.get('git_commit')}")
-            sys.exit(1)
+        hash_changed = get_git_hash() != params.get('git_commit', '')
+        dirty        = is_working_tree_dirty()
+        if hash_changed or dirty:
+            if force:
+                print(f"⚠  Repo state differs since run '{run_id}' was started — continuing anyway.")
+                print(f"   Results may not be comparable to the original run.")
+            else:
+                if hash_changed:
+                    print(f"✗ Repo commit has changed since run '{run_id}' was started.")
+                    print(f"  Checkout the original commit before continuing and then call this command again:")
+                    print(f"        git checkout {params.get('git_commit')} && python3 run.py --continue-run {run_id}")
+                elif dirty:
+                    print(f"✗ Working tree has uncommitted changes.")
+                    print(f"  Commit or stash your changes before continuing.")
+                print(f"  Or skip these checks (results may differ):")
+                print(f"        python3 run.py --continue-run {run_id}:force")
+                sys.exit(1)
         model      = params['model']
         judge      = params['judge']
         difficulty = params['difficulty']
@@ -201,6 +274,22 @@ def main():
         max_turns  = params['max_turns']
         task_names = params['tasks']
         print(f"✓ Continuing run: {run_id}  ({run_dir})")
+    elif args.regrade:
+        run_id  = args.regrade[:6]
+        run_dir = find_run_dir(results_dir, run_id)
+        if not run_dir.exists():
+            print(f"✗ Run '{run_id}' not found in {results_dir}/")
+            sys.exit(1)
+        with open(run_dir / 'run_params.json') as f:
+            params = json.load(f)
+        model      = params['model']
+        judge      = args.judge if '--judge' in sys.argv else params['judge']
+        difficulty = params['difficulty']
+        seeds      = params['seeds']
+        agentic    = params['agentic']
+        max_turns  = params['max_turns']
+        task_names = params['tasks']
+        print(f"✓ Regrading run: {run_id}  ({run_dir})  judge: {judge}")
     else:
         run_id  = generate_run_id(results_dir)
         timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -239,6 +328,12 @@ def main():
             with open(run_dir / 'run_params.json', 'w') as f:
                 json.dump(run_params, f, indent=2)
             print(f"✓ New run: {run_id}  ({run_dir})")
+            if is_working_tree_dirty():
+                print(f"⚠  Working tree has uncommitted changes — results may not be reproducible.")
+                print(f"   Commit your changes first, or continue anyway. Do you want to continue? [y/n] ", end='', flush=True)
+                if input().strip().lower() == 'n':
+                    print("Aborting. Commit or stash your changes and re-run.")
+                    sys.exit(0)
 
     if not args.validate_only:
         check_ollama_if_needed(model, judge)
@@ -277,10 +372,10 @@ def main():
             def _dest(m):
                 return run_dir / m.replace('/', '-').replace(':', '-') / task_name / str(seed)
 
-            skip_generation = not args.validate_only and (
+            skip_generation = args.regrade or (not args.validate_only and (
                 (_dest(model) / 'model_response.json').exists() and
                 (_dest(model) / 'rubrics.json').exists()
-            )
+            ))
 
             if skip_generation:
                 print(f"↩  Skipping task generation — model already produced response for seed {seed} and rubrics exist")
@@ -290,6 +385,10 @@ def main():
                 task.populate_metarubrics()
                 task.validate_metarubrics()
                 task.generate_rubrics()
+                if not args.validate_only:
+                    rubrics_dest = _dest(model)
+                    rubrics_dest.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(task.ground_truth_dir / 'rubrics.json', rubrics_dest / 'rubrics.json')
 
             # ── Validate-only path ────────────────────────────
             if args.validate_only:
@@ -340,9 +439,14 @@ def main():
             model_clean = model.replace('/', '-').replace(':', '-')
             dest_dir    = run_dir / model_clean / task_name / str(seed)
 
-            model_resp_path   = dest_dir / 'model_response.json'
-            rubrics_path      = dest_dir / 'rubrics.json'
-            task_results_path = dest_dir / 'task_results.json'
+            model_resp_path = dest_dir / 'model_response.json'
+            rubrics_path    = dest_dir / 'rubrics.json'
+            judge_clean     = judge.replace('/', '-').replace(':', '-')
+
+            # ── Regrade: skip seeds without model response ────
+            if args.regrade and not (model_resp_path.exists() and rubrics_path.exists()):
+                print(f"↩  No model response or rubrics — skipping")
+                continue
 
             # ── Model step ───────────────────────────────────
             if model_resp_path.exists() and rubrics_path.exists():
@@ -364,7 +468,7 @@ def main():
                     continue
 
             # ── Judge step ───────────────────────────────────
-            if task_results_path.exists():
+            if _latest_judge_response(dest_dir, judge_clean) is not None and not args.regrade:
                 print(f"↩  Skipping judge call — response exists")
             else:
                 try:
@@ -377,8 +481,17 @@ def main():
                         dest_dir     = dest_dir,
                     )
                 except Exception as e:
-                    print(f"✗ Judge failed [{task_name} / seed {seed} / {model}]: {e}")
+                    print(f"✗ Judge failed [{model}/{task_name}/{seed}]: {e}")
                     failures.append({'step': 'judge', 'task': task_name, 'seed': seed, 'model': model, 'reason': str(e)})
+
+            # ── Clean up partial state if task completed fully ────
+            if _latest_judge_response(dest_dir, judge_clean) is not None:
+                _p  = dest_dir / '_partial_model_response.json'
+                _ps = dest_dir / '_partial_session'
+                if _p.exists():
+                    _p.unlink()
+                if _ps.exists():
+                    shutil.rmtree(_ps)
 
     # ── Failure summary ───────────────────────────────────────
     if failures:
@@ -397,12 +510,11 @@ def main():
             seeds      = seeds,
             task_names = task_names,
             failures   = failures,
+            agentic    = agentic,
+            max_turns  = max_turns,
         )
-        benchmark.save(run_dir)
+        benchmark.save(run_dir, judge=judge)
         if not failures:
-            print(f"\n{'=' * 50}")
-            print("BENCHMARK RESULTS")
-            print('=' * 50)
             print(benchmark)
             
 

@@ -8,12 +8,14 @@ import tempfile
 import time
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
-from src.task import Task, TaskResults, MetarubricResult
+from src.task import Task
+from src.results import TaskResults, MetarubricResult
 from src.utils import get_git_hash
 from src.tools import TOOLS, _load_sandbox_libraries
 
 import litellm
-litellm.request_timeout = 300
+litellm.timeout = 300
+litellm.modify_params = True   # inject dummy tool when history has tool-use but tools= is omitted
 #litellm._turn_on_debug()
 
 class Evaluator:
@@ -51,14 +53,6 @@ class Evaluator:
         else:
             model_output, messages = self._send_to_model(task, model)
 
-        # Clean up partial state on success
-        partial_path    = dest_dir / '_partial_model_response.json'
-        partial_session = dest_dir / '_partial_session'
-        if partial_path.exists():
-            partial_path.unlink()
-        if partial_session.exists():
-            shutil.rmtree(partial_session)
-
         with open(dest_dir / 'model_response.json', 'w') as f:
             json.dump({
                 'task':     task.folder.name,
@@ -67,7 +61,6 @@ class Evaluator:
                 'messages': messages,
             }, f, indent=2)
 
-        shutil.copy(task.ground_truth_dir / 'rubrics.json', dest_dir / 'rubrics.json')
         print(f"✓ Model response saved: {dest_dir / 'model_response.json'}")
         return model_output
 
@@ -85,31 +78,19 @@ class Evaluator:
 
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        with open(dest_dir / 'task_results.json', 'w') as f:
-            json.dump({
-                'task':       task.folder.name,
-                'model':      model,
-                'judge':      judge,
-                'seed':       task.seed,
-                'difficulty': task.difficulty,
-                'git_commit': get_git_hash(),
-                'timestamp':  datetime.now().isoformat(),
-                'metarubrics': [
-                    {
-                        'name':     mr.metarubric_name,
-                        'category': mr.category,
-                        'total':    mr.total,
-                        'passed':   mr.passed,
-                        'weight':   mr.weight,
-                    }
-                    for mr in mr_results
-                ],
-            }, f, indent=2)
+        judge_clean = judge.replace('/', '-').replace(':', '-')
+        base = dest_dir / f'judge_response_{judge_clean}.json'
+        if base.exists():
+            idx = 1
+            while (dest_dir / f'judge_response_{judge_clean}_{idx}.json').exists():
+                idx += 1
+            judge_resp_path = dest_dir / f'judge_response_{judge_clean}_{idx}.json'
+        else:
+            judge_resp_path = base
+        with open(judge_resp_path, 'w') as f:
+            json.dump({'judge': judge, 'metarubrics': raw_data}, f, indent=2)
 
-        with open(dest_dir / 'judge_response.json', 'w') as f:
-            json.dump({'metarubrics': raw_data}, f, indent=2)
-
-        print(f"✓ Task results saved: {dest_dir / 'task_results.json'}")
+        print(f"✓ Judge response saved: {judge_resp_path}")
         return mr_results
 
     # ─────────────────────────────────────────
@@ -118,7 +99,7 @@ class Evaluator:
     def _litellm_completion_with_retry(self, **kwargs):
         for attempt in range(3):
             try:
-                return litellm.completion(**kwargs, request_timeout=300)
+                return litellm.completion(**kwargs, timeout=300)
             except (litellm.ServiceUnavailableError,
                     litellm.RateLimitError,
                     litellm.InternalServerError,
@@ -142,6 +123,84 @@ class Evaluator:
             print(f"\n[THINKING]\n{reasoning}\n[/THINKING]")
 
     # ─────────────────────────────────────────
+    # Print data/cache usage blocks
+    # ─────────────────────────────────────────
+    def _print_cache_usage(self, response):
+        usage = getattr(response, 'usage', None)
+        if usage is None:
+            return
+        priv    = getattr(usage, '__pydantic_private__', {}) or {}
+        created = priv.get('_cache_creation_input_tokens', 0) or 0
+        read    = priv.get('_cache_read_input_tokens', 0) or 0
+        if created or read:
+            print(f"  [cache] write={created} read={read}")
+
+    # ─────────────────────────────────────────
+    # Applying caching for Anthropic models
+    # ─────────────────────────────────────────
+    def _apply_cache_breakpoint(self, messages: list, model: str) -> None:
+        """Place Anthropic cache breakpoints on the first and last messages.
+
+        Anthropic allows at most 4 cache_control blocks per request. We use 2:
+        - messages[0]: stable cache for task instructions (cache hit every turn)
+        - messages[-1]: rolling cache for the full conversation history
+
+        Old markers are cleared before adding new ones so they never accumulate.
+        Cache reads are content-based on Anthropic's side, so old cached prefixes
+        are reused automatically even after their cache_control marker is removed.
+        """
+        provider = model.split('/')[0] if '/' in model else ''
+        if not messages or not ('claude' in model or provider == 'anthropic'):
+            return
+
+        # Remove all existing markers left from previous turns
+        for msg in messages:
+            content = msg.get('content')
+            if isinstance(content, list):
+                for i, block in enumerate(content):
+                    if isinstance(block, dict) and 'cache_control' in block:
+                        content[i] = {k: v for k, v in block.items() if k != 'cache_control'}
+
+        def mark_last_text_block(msg):
+            content = msg.get('content')
+            if isinstance(content, str):
+                msg['content'] = [{'type': 'text', 'text': content,
+                                    'cache_control': {'type': 'ephemeral'}}]
+            elif isinstance(content, list):
+                for i in range(len(content) - 1, -1, -1):
+                    block = content[i]
+                    if isinstance(block, dict) and block.get('type') in ('text', 'tool_result'):
+                        content[i] = {**block, 'cache_control': {'type': 'ephemeral'}}
+                        break
+
+        mark_last_text_block(messages[0])
+        if len(messages) > 1:
+            mark_last_text_block(messages[-1])
+
+    # ─────────────────────────────────────────
+    # Strip base64 image data from old view_image 
+    # tool results when context window is exceeded.
+    # ─────────────────────────────────────────
+    def _strip_old_images(self, messages: list) -> None:
+        """Replace base64 image data in old view_image results with a placeholder.
+        Called only when context window is exceeded; keeps images from the last turn intact."""
+        # Find the start of the last turn: the last assistant message that had tool calls
+        last_turn_start = 0
+        for i, m in enumerate(messages):
+            if m.get('role') == 'assistant' and m.get('tool_calls'):
+                last_turn_start = i
+
+        for i, m in enumerate(messages):
+            if i >= last_turn_start:
+                break
+            if m.get('name') == 'view_image' and isinstance(m.get('content'), list):
+                messages[i]['content'] = [
+                    b if b.get('type') != 'image_url'
+                    else {'type': 'text', 'text': '[image data removed to save context]'}
+                    for b in messages[i]['content']
+                ]
+
+    # ─────────────────────────────────────────
     # Load judge prompt
     # ─────────────────────────────────────────
     def _load_judge_prompt(self, model_output: str, criteria: str) -> str:
@@ -153,19 +212,12 @@ class Evaluator:
     # ─────────────────────────────────────────
     # Load agentic prompt
     # ─────────────────────────────────────────
-    def load_agentic_prompt(self, max_turns: int, vision: bool = True) -> str:
+    def load_agentic_prompt(self, max_turns: int) -> str:
         """Load agentic prompt addition and fill in available libraries."""
         template = (Path(__file__).parent / 'agentic_prompt.md').read_text()
-        view_image_note = ", and `view_image` to inspect image files" if vision else ""
-        view_image_tool = (
-            "- **view_image** — render an image file into your context so you can inspect it visually\n"
-            if vision else ""
-        )
         return template.format(
-            libraries       = _load_sandbox_libraries(),
-            max_turns       = max_turns,
-            view_image_tool = view_image_tool,
-            view_image_note = view_image_note,
+            libraries = _load_sandbox_libraries(),
+            max_turns = max_turns,
         )
 
     # ─────────────────────────────────────────
@@ -240,37 +292,36 @@ class Evaluator:
                 shutil.copytree(task.input_dir, session_dir, dirs_exist_ok=True)
 
             # Providers that support multimodal content in tool result messages.
-            # litellm.supports_vision() only checks the model, not whether the
-            # provider accepts image blocks in tool results — Groq e.g. does not.
-            _VISION_TOOL_PROVIDERS = {'anthropic', 'openai', 'azure', 'gemini', 'vertex_ai', 'bedrock', 'ollama'}
-            try:
-                _, provider, _, _ = litellm.get_llm_provider(model)
-            except Exception:
-                provider = ''
-            vision   = provider in _VISION_TOOL_PROVIDERS and litellm.supports_vision(model=model)
-            tools    = TOOLS if vision else [t for t in TOOLS if t['function']['name'] != 'view_image']
-
             if initial_messages is not None:
                 messages = initial_messages
             else:
                 # Include input files in the first message
-                messages = [{
-                    'role':    'user',
-                    'content': [
-                        {'type': 'text',
-                         'text': task.get_prompt() + self.load_agentic_prompt(max_turns, vision)},
-                                *task.get_input_files(embed_data=False)
-                    ]
-                }]
+                content = [
+                    {'type': 'text',
+                     'text': task.get_prompt() + self.load_agentic_prompt(max_turns)},
+                    *task.get_input_files(embed_data=False)
+                ]
+                messages = [{'role': 'user', 'content': content}]
 
             for turn in range(start_turn, max_turns):
+                self._apply_cache_breakpoint(messages, model)
                 try:
-                    response = self._litellm_completion_with_retry(
-                        model       = model,
-                        messages    = messages,
-                        tools       = tools,
-                        temperature = 0.0,
-                    )
+                    try:
+                        response = self._litellm_completion_with_retry(
+                            model       = model,
+                            messages    = messages,
+                            tools       = TOOLS,
+                            temperature = 0.0,
+                        )
+                    except litellm.ContextWindowExceededError:
+                        print("⚠  Context window exceeded — stripping old images and retrying")
+                        self._strip_old_images(messages)
+                        response = self._litellm_completion_with_retry(
+                            model       = model,
+                            messages    = messages,
+                            tools       = TOOLS,
+                            temperature = 0.0,
+                        )
                 except Exception:
                     # Save partial state so the run can be resumed with --continue-run
                     partial_path = dest_dir / '_partial_model_response.json'
@@ -288,6 +339,8 @@ class Evaluator:
                     )
                 message = response.choices[0].message
                 self._print_thinking(message.model_dump())
+                #self._print_cache_usage(response)
+                print(response.usage)
 
                 # No tool calls — model finished analysis, ask for summary
                 if not message.tool_calls:
@@ -306,10 +359,12 @@ class Evaluator:
                             }
                         ]
                     })
-
+                    self._apply_cache_breakpoint(messages, model)
                     summary = self._litellm_completion_with_retry(
                         model       = model,
                         messages    = messages,
+                        tools       = TOOLS,
+                        tool_choice = 'none',
                         temperature = 0.0
                     )
 
@@ -425,6 +480,7 @@ class Evaluator:
                             'Maximum tool calls reached. State your final results '
                             'explicitly following the output format specified in the '
                             'task instructions based on what you have found so far.'
+                            'Only the following message is what is is shown to the user.'
                         )
                     }
                 ]
@@ -433,6 +489,8 @@ class Evaluator:
             summary = self._litellm_completion_with_retry(
                 model       = model,
                 messages    = messages,
+                tools       = TOOLS,
+                tool_choice = 'none',
                 temperature = 0.0
             )
 
@@ -472,14 +530,14 @@ class Evaluator:
 
             results.append(MetarubricResult(
                 metarubric_name = mr_data['name'],
-                category        = mr_data.get('category', ''),
+                dimension        = mr_data.get('dimension', ''),
                 total           = len(rubrics),
                 passed          = passed,
                 weight          = mr_data['weight']
             ))
             raw_data.append({
                 'name':     mr_data['name'],
-                'category': mr_data.get('category', ''),
+                'dimension': mr_data.get('dimension', ''),
                 'rubrics':  rubric_verdicts,
             })
 
@@ -521,15 +579,29 @@ class Evaluator:
         return 'YES' if raw.startswith('YES') else 'NO'
 
     # ─────────────────────────────────────────
-    # Batch rubrics in one metarubric
+    # Batch rubrics in one metarubric and split into 
+    # chunks if too many for the judge to handle reliably
     # ─────────────────────────────────────────
+
     def _judge_batch(self, rubrics: list[str],
                      model_output: str,
                      judge: str) -> tuple[int, list[dict]]:
         """
-        All rubrics in one call — for capable API models.
+        Rubrics in chunked calls — for capable API models.
         Returns (passed count, [{criterion, verdict}, ...]) where verdict is 'YES' or 'NO'.
         """
+        JUDGE_CHUNK_SIZE = 50  # max rubrics per API call to avoid judge miscounts
+
+        all_verdicts: list[dict] = []
+        for start in range(0, len(rubrics), JUDGE_CHUNK_SIZE):
+            chunk = rubrics[start:start + JUDGE_CHUNK_SIZE]
+            all_verdicts.extend(self._judge_chunk(chunk, model_output, judge))
+        return sum(1 for v in all_verdicts if v['verdict'] == 'YES'), all_verdicts
+
+    def _judge_chunk(self, rubrics: list[str],
+                     model_output: str,
+                     judge: str) -> list[dict]:
+        """One API call for a chunk of rubrics. Returns [{criterion, verdict}, ...]."""
         numbered = '\n'.join(f"{i+1}. {r}" for i, r in enumerate(rubrics))
         prompt   = self._load_judge_prompt(model_output=model_output, criteria=numbered)
 
@@ -552,11 +624,66 @@ class Evaluator:
                 f"Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics"
             )
 
-        rubric_verdicts = [
+        return [
             {'criterion': r, 'verdict': 'YES' if v else 'NO'}
             for r, v in zip(rubrics, verdicts)
         ]
-        return sum(1 for v in verdicts if v), rubric_verdicts
+
+    # ─────────────────────────────────────────
+    # Shared Docker sandbox runner
+    # ─────────────────────────────────────────
+    SANDBOX_TIMEOUT = 120  # seconds
+
+    def _run_in_sandbox(self, command, session_dir: Path, cleanup: bool = False) -> str:
+        try:
+            client = docker.from_env()
+            client.ping()
+        except docker.errors.DockerException:
+            raise RuntimeError(
+                "⚠  Docker daemon is not running. "
+                "Start Docker Desktop and try again."
+            )
+        container = None
+        try:
+            container = client.containers.run(
+                image         = 'benchmark-sandbox',
+                command       = command,
+                working_dir   = '/home/agent/workspace',
+                user          = 'agent',
+                network_mode  = 'none',
+                mem_limit     = '512m',
+                memswap_limit = '512m',
+                cpu_quota     = 50000,
+                pids_limit    = 64,
+                volumes       = {str(session_dir): {'bind': '/home/agent/workspace', 'mode': 'rw'}},
+                tmpfs         = {'/tmp': ''},
+                detach        = True,
+                stdout        = True,
+                stderr        = True,
+            )
+            timed_out = False
+            try:
+                container.wait(timeout=self.SANDBOX_TIMEOUT)
+            except Exception as e:
+                if 'ReadTimeout' in type(e).__name__:
+                    container.stop()
+                    timed_out = True
+                else:
+                    raise
+            output = container.logs(stdout=True, stderr=True).decode()
+            if timed_out:
+                output += f"\n[killed: exceeded {self.SANDBOX_TIMEOUT}s time limit]"
+            return output or "(no output)"
+        except Exception as e:
+            return f"Execution error: {e}"
+        finally:
+            if container:
+                try:
+                    container.remove(force=True)
+                except Exception:
+                    pass
+            if cleanup:
+                shutil.rmtree(session_dir, ignore_errors=True)
 
     # ─────────────────────────────────────────
     # Run shell command in Docker sandbox
@@ -568,7 +695,6 @@ class Evaluator:
     }
 
     def _run_command(self, command: str, session_dir: Path, max_chars: int = 5_000) -> str:
-        # Validate every command segment (split on ||, &&, |, ;)
         for segment in re.split(r'\|\||&&|[|;]', command):
             tokens = segment.strip().split()
             if not tokens:
@@ -576,58 +702,7 @@ class Evaluator:
             if tokens[0] not in self._ALLOWED_COMMANDS:
                 allowed = ', '.join(sorted(self._ALLOWED_COMMANDS))
                 return f"Error: '{tokens[0]}' is not allowed. Allowed commands: {allowed}."
-
-        # Check Docker daemon is running before attempting anything
-        try:
-            client = docker.from_env()
-            client.ping()
-        except docker.errors.DockerException:
-            raise RuntimeError(
-                "⚠  Docker daemon is not running. "
-                "Start Docker Desktop and try again."
-            )
-
-        # Use persistent session_dir
-        tmpdir  = session_dir
-        mode    = 'rw'      # read-write — agent can save files
-        cleanup = False     # session_dir managed by caller
-
-        try:
-            output = client.containers.run(
-                image         = 'benchmark-sandbox',
-                command       = ['sh', '-c', command],
-                working_dir   = '/home/agent/workspace',
-                user          = 'agent',
-                network_mode  = 'none',
-                mem_limit     = '512m',
-                memswap_limit = '512m',
-                cpu_quota     = 50000,
-                pids_limit    = 64,
-                volumes       = {
-                    str(tmpdir): {
-                        'bind': '/home/agent/workspace',
-                        'mode': mode
-                    }
-                },
-                tmpfs         = {'/tmp': ''},
-                detach        = False,
-                stdout        = True,
-                stderr        = True,
-                remove        = True,
-            )
-
-            result = output.decode() if output else "(no output)"
-
-        except docker.errors.ContainerError as e:
-            result = e.stderr.decode() if e.stderr else str(e)
-
-        except Exception as e:
-            result = f"Execution error: {e}"
-
-        finally:
-            if cleanup:
-                shutil.rmtree(tmpdir, ignore_errors=True)
-
+        result = self._run_in_sandbox(['sh', '-c', command], session_dir)
         if len(result) > max_chars:
             result = result[:max_chars] + f"\n...(truncated at {max_chars} chars)"
         return result
@@ -679,61 +754,7 @@ class Evaluator:
     # Execute Python in Docker container sandbox
     # ─────────────────────────────────────────
     def _execute_python(self, code: str, session_dir: Path) -> str:
-        """
-        Execute model-generated Python code in an isolated Docker container.
-        If session_dir is provided, it is mounted as read-write workspace
-        allowing the agent to persist files between turns.
-        Otherwise a fresh read-only workspace is created per call.
-        """
-        # Check Docker daemon is running before attempting anything
-        try:
-            client = docker.from_env()
-            client.ping()
-        except docker.errors.DockerException:
-            raise RuntimeError(
-                "⚠  Docker daemon is not running. "
-                "Start Docker Desktop and try again."
-            )
-
-        # Use persistent session_dir
-        tmpdir  = session_dir
-        mode    = 'rw'      # read-write — agent can save files
-        cleanup = False     # session_dir managed by caller
-
-        try:
-            # Write script into workspace
-            (tmpdir / 'script.py').write_text(code)
-
-            output = client.containers.run(
-                image         = 'benchmark-sandbox',
-                command       = 'python /home/agent/workspace/script.py',
-                working_dir   = '/home/agent/workspace',
-                user          = 'agent',
-                network_mode  = 'none',
-                mem_limit     = '512m',
-                memswap_limit = '512m',
-                cpu_quota     = 50000,
-                volumes       = {
-                    str(tmpdir): {
-                        'bind': '/home/agent/workspace',
-                        'mode': mode
-                    }
-                },
-                tmpfs         = {'/tmp': ''},
-                detach        = False,
-                stdout        = True,
-                stderr        = True,
-                remove        = True,
-            )
-
-            return output.decode() if output else "(no output)"
-
-        except docker.errors.ContainerError as e:
-            return e.stderr.decode() if e.stderr else str(e)
-
-        except Exception as e:
-            return f"Execution error: {e}"
-
-        finally:
-            if cleanup:
-                shutil.rmtree(tmpdir, ignore_errors=True)
+        """Execute model-generated Python code in an isolated Docker container.
+        session_dir is mounted read-write so files persist between turns."""
+        (session_dir / 'script.py').write_text(code)
+        return self._run_in_sandbox('python /home/agent/workspace/script.py', session_dir)

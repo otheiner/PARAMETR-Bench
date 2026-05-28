@@ -40,8 +40,6 @@ ________________________________________
 ## Files provided
 
 The dataset containing: 
-    - Table summarizing all measurements conducted during the specified time period
-    - Lissajous figure images with filenames matched to measurement IDs in the table
 
 - `measurements.csv` — Table summarizing all measurements conducted during the specified time period.
 - `oscilloscope_output/` — Folder containing .png files from the oscilloscope with measured Lissajous figure - name of the files corresponds to the measurement IDs.

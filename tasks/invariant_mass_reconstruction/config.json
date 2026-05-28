@@ -3,14 +3,14 @@
 
     "difficulties": {
         "easy": {
-            "N_EVENTS": 200,
+            "N_EVENTS": 400,
             "SIGNAL_FRACTION": 0.5,
             "MEAN_LAMBDA_BKG_DECAY": 0.3,
             "LAYER_RADII": [0.05, 0.55],
             "MEAN_GAMMA_SIGNAL" : 10,
             "MASS_TOLERANCE" : 0.02,
             "WIDTH_TOLERANCE" : 1.0,
-            "PER-EVENT_MASS_TOLERANCE" : 0.1
+            "PER-EVENT_MASS_TOLERANCE" : 0.01
         },
         "medium": {
             "N_EVENTS": 1000,
@@ -20,25 +20,25 @@
             "MEAN_GAMMA_SIGNAL" : 3,
             "MASS_TOLERANCE" : 0.01,
             "WIDTH_TOLERANCE" : 0.5,
-            "PER-EVENT_MASS_TOLERANCE" : 0.05
+            "PER-EVENT_MASS_TOLERANCE" : 0.0025
         },
         "hard": {
-            "N_EVENTS": 10000,
-            "SIGNAL_FRACTION": 0.05,
-            "MEAN_LAMBDA_BKG_DECAY": 0.05,
+            "N_EVENTS": 1000,
+            "SIGNAL_FRACTION": 0.03,
+            "MEAN_LAMBDA_BKG_DECAY": 0.07,
             "LAYER_RADII": [0.05, 0.15, 0.30, 0.55],
             "MEAN_GAMMA_SIGNAL" : 1,
             "MASS_TOLERANCE" : 0.005,
-            "WIDTH_TOLERANCE" : 0.3,
-            "PER-EVENT_MASS_TOLERANCE" : 0.01
+            "WIDTH_TOLERANCE" : 0.5,
+            "PER-EVENT_MASS_TOLERANCE" : 0.001
         }
     },
 
     "fixed_parameters": {
-        "M_MIN": 10,
-        "M_MAX": 80,
-        "M_SIG_MIN": 25,
-        "M_SIG_MAX": 65,
+        "M_MIN": 5,
+        "M_MAX": 85,
+        "M_SIG_MIN": 20,
+        "M_SIG_MAX": 70,
         "PT_SCALE": 10.0,
         "ETA_MAX": 3.0,
         "DAUGHTER_MASS": 0.000511,

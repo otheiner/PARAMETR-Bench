@@ -13,7 +13,7 @@
     <br>
   <img src="https://github.com/user-attachments/assets/a20e775e-8a33-4f3d-b4d3-8f16318c9ec3" width="900" title="Preview of some input and ground-truth reference files generated procedurally.">
     <br><br>
-      <i> Figure: Preview of a few input files from tasks in PARAMETR-Bench generated procedurally.</i>
+      <i> Figure: Preview of a few input and ground truth files from tasks in the PARAMETR-Bench generated procedurally.</i>
 </p>
 
 # What is this?
@@ -26,7 +26,7 @@ Because tasks are generated from a fixed distribution controlled by difficulty p
 
 The repository includes several tasks inspired by landmark discoveries in particle physics and cosmology, such as invariant mass reconstruction and Cepheid variable calibration. However, any scientific process with a simulatable generating distribution can become a task — physics, mathematics, chemistry, biology, climate science, and beyond.
 
-Try the inteactive task generation online or read the detailed technical blog post about the framework: 
+Try the interactive task generation online or read the detailed technical blog post about the framework: 
 
 <p align="center">
   <a href="https://huggingface.co/spaces/otheiner/PARAMETR-Bench_demo"><img src="https://img.shields.io/badge/🤗_Try_the_demo-FFD21E?style=for-the-badge" alt="Try the demo"/></a>&nbsp;&nbsp;<a href="https://otheiner.github.io/PARAMETR-Bench-blog"><img src="https://img.shields.io/badge/📖_Read_the_post-444444?style=for-the-badge" alt="Read the blog post"/></a>
@@ -34,7 +34,7 @@ Try the inteactive task generation online or read the detailed technical blog po
 
 # Results
 
-Initial evaluations across frontier models are in progress and will be published here soon to demonstarte the framework.
+Initial evaluations across frontier models are in progress and will be published here soon to demonstrate the framework.
 
 # Motivation 
 
@@ -52,13 +52,13 @@ pip install .
 
 ## API models
 
-Run the benchmark and produce your own results (you can plug any models of your choice supported by `litellm`). How to do this is described bellow. To use API models, add your keys:
+Run the benchmark and produce your own results (you can plug any models of your choice supported by `litellm`). How to do this is described below. To use API models, add your keys:
 
 ```bash
 cp .env.example .env   # fill in your API keys to .env
 ```
 
-Framework allows non-agentic (no tools allowed) and agentic (allows running python scripts) evaluation. Details on how to run actual evaluation with or without agent is described in the following sections.
+The framework allows non-agentic (no tools allowed) and agentic (allows running python scripts) evaluation. Details on how to run actual evaluation with or without agent is described in the following sections.
 
 ## Model evaluation
 
@@ -72,7 +72,7 @@ python run.py --model gemini/gemini-3.1-flash-lite-preview \
 ```
 This sends LLM prompt and all the data in one message and LLM has one shot to return the result.
 
-**Agentic evaluation** enables performing more realistic scientific tasks. Agent gets only the prompt and list of files to work with and it has then the ability to use tools to inspect these files and analyze them by python, which is executed in safe Docker sandbox environment without access to the Internet. First of all, run docker daemon on your machine. Description of the sandbox environment and its Dockerfile is located in `sandbox` folder. 
+**Agentic evaluation** enables performing more realistic scientific tasks. Agent gets only the prompt and list of files to work with and it then has the ability to use tools to inspect these files and analyze them by python, which is executed in safe Docker sandbox environment without access to the Internet. First of all, run docker daemon on your machine. Description of the sandbox environment and its Dockerfile is located in `sandbox` folder. 
 
 Build the sandbox Docker image and run benchmark using flag `--agentic`:
 
@@ -91,6 +91,12 @@ API failures outside your control shouldn't cost you a full re-run. Each run cre
 
 ```bash
 python run.py --continue-run run_ID
+```
+
+The framework checks that the git commit and working tree match the state at the start of the run. If anything has changed, resuming may produce results that are not comparable to the original run. If you want to continue anyway:
+
+```bash
+python run.py --continue-run run_ID:force
 ```
 
 **What gets preserved**

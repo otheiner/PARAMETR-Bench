@@ -26,12 +26,12 @@
     },
 
     "fixed_parameters": {
-        "c": 299792.458,
+        "c": 299792,
         "H0": 67,
         "A_MIN" : -2.6 ,
         "A_MAX" : -2.2 ,
-        "B_MIN" : -3.85,
-        "B_MAX" : -4.25,
+        "B_MAX" : -3.85,
+        "B_MIN" : -4.25,
         "Z_MAX" : 0.05,
         "SIGMA_DISTANCE_CEPHEIDES" : 0.1,
         "LAMBDA_MIN": 400,

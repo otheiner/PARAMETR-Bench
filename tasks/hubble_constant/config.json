@@ -8,7 +8,7 @@
             "GALAXY_GENERATE_PROBABILITY": 1,
             "Z_TOLERANCE_BAND" : 0.0012,
             "H_TOLERANCE_RELATIVE" : 0.1,
-            "H_STDEV_TOLERANCE_RELATIVE" : 1,
+            "H_STDEV_TOLERANCE_RELATIVE" : 0.8,
             "LINE_VISIBLE_PROBABILITY" : 1
         },
         "medium": {

@@ -71,6 +71,8 @@ class Evaluator:
         Judge model_output against rubrics_path, save judge_response.json to dest_dir.
         Raises on any failure — nothing is saved unless all metarubrics succeed.
         """
+        model_output = model_output if isinstance(model_output, str) else ''
+
         with open(rubrics_path) as f:
             rubrics_data = json.load(f)
 

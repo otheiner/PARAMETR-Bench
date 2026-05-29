@@ -10,6 +10,8 @@ If a criterion cannot be unambiguously evaluated from the model's response (beca
 
 Each criterion describes a property the model's response should demonstrate. Answer YES only if the response contains explicit evidence for the criterion. Answer NO if the evidence is absent, partial, contradicted, or only implied without direct support.
 
+In case model returnes an empty response, answers to all criteria are automatically NO.
+
 ## Example outputs
 
 Example for 3 criteria: [true, false, true]

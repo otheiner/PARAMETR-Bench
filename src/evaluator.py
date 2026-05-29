@@ -612,14 +612,24 @@ class Evaluator:
             messages    = [{'role': 'user', 'content': prompt}],
             temperature = 0.0
         )
-        raw = response.choices[0].message.content.strip()
+        raw = response.choices[0].message.content or ''
+        raw = raw.strip()
 
         # Strip markdown if present
         raw = re.sub(r'```json\s*', '', raw)
         raw = re.sub(r'```\s*',     '', raw)
         raw = raw.strip()
 
-        verdicts = json.loads(raw)
+        try:
+            verdicts = json.loads(raw)
+        except json.JSONDecodeError:
+            # Judge may have prefixed the JSON array with explanatory text — extract it.
+            m = re.search(r'\[.*?\]', raw, re.DOTALL)
+            if m:
+                verdicts = json.loads(m.group())
+            else:
+                print(f"⚠  Judge response is not valid JSON. Raw response:\n{raw!r}")
+                raise
 
         if len(verdicts) != len(rubrics):
             rubric_lines  = '\n'.join(f"  {i+1}. {r}" for i, r in enumerate(rubrics))

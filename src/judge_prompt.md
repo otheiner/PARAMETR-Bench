@@ -23,4 +23,4 @@ Example for 1 criterion: [true]
 **Criteria:**
 {criteria}
 
-Answer JSON array only!
+Make sure that number of your answers matches exactly the number of the tested criteris. Answer JSON array only!

@@ -620,8 +620,12 @@ class Evaluator:
         verdicts = json.loads(raw)
 
         if len(verdicts) != len(rubrics):
+            rubric_lines  = '\n'.join(f"  {i+1}. {r}" for i, r in enumerate(rubrics))
+            verdict_lines = '\n'.join(f"  {i+1}. {v}" for i, v in enumerate(verdicts))
             raise ValueError(
-                f"Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics"
+                f"Judge returned {len(verdicts)} verdicts for {len(rubrics)} rubrics\n"
+                f"RUBRICS:\n{rubric_lines}\n"
+                f"VERDICTS:\n{verdict_lines}"
             )
 
         return [

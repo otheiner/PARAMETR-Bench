@@ -592,7 +592,7 @@ class Evaluator:
         Rubrics in chunked calls — for capable API models.
         Returns (passed count, [{criterion, verdict}, ...]) where verdict is 'YES' or 'NO'.
         """
-        JUDGE_CHUNK_SIZE = 50  # max rubrics per API call to avoid judge miscounts
+        JUDGE_CHUNK_SIZE = 10  # max rubrics per API call to avoid judge miscounts
 
         all_verdicts: list[dict] = []
         for start in range(0, len(rubrics), JUDGE_CHUNK_SIZE):

@@ -34,7 +34,13 @@ Try the interactive task generation online or read the detailed technical blog p
 
 # Results
 
-Initial evaluations across frontier models are in progress and will be published here soon to demonstrate the framework.
+We ran evaluation of multiple frontier models on tasks from PARAMETR-Bench on hard difficulty using four public seeds [10, 11, 12, 13] and we got following scores. To learn more details about evaluation methodology and details of this result visit [blog post](https://otheiner.github.io/PARAMETR-Bench-blog).
+
+<p align="center">
+    <br>
+  <img src="https://otheiner.github.io/PARAMETR-Bench-blog/assets/images/PARAMETR-Bench/benchmark_results_public_judge_haiku-4-5.png" width="700" title="Results of the `benchmark` - for details see the [blog post](https://otheiner.github.io/PARAMETR-Bench-blog)">
+    <br><br>
+</p>
 
 # Motivation 
 

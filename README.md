@@ -42,7 +42,7 @@ I ran evaluation of multiple frontier models on tasks from PARAMETR-Bench on har
     <br><br>
 </p>
 
-Beyond standard scoring, I conducted additional analyses. For instance, PARAMETR-Bench can shed light on the varying problem-solving strategies employed by different models. The following plot shows the relative fraction of tool calls across tasks for each model. Agents were given 10 agentic turns, and during each turn, they could issue multiple parallel tool calls. The white numbers inside the cells indicate the absolute number of times a given tool was called. This result is shown in the following figure.
+Beyond standard scoring, I conducted additional analyses. For instance, PARAMETR-Bench can shed light on the varying problem-solving strategies employed by different models. Each square in the following plot represents one task instance and colours shows the relative fraction of tool calls across tasks for each model. Agents were given 10 agentic turns, and during each turn, they could issue multiple parallel tool calls. The white numbers inside the cells indicate the absolute number of times a given tool was called for the task.
 
 <p align="center">
     <br>

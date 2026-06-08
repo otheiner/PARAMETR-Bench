@@ -34,13 +34,23 @@ Try the interactive task generation online or read the detailed technical blog p
 
 # Results
 
-We ran evaluation of multiple frontier models on tasks from PARAMETR-Bench on hard difficulty using four public seeds [10, 11, 12, 13] and we got following scores. To learn more details about evaluation methodology and details of this result visit [blog post](https://otheiner.github.io/PARAMETR-Bench-blog).
+I ran evaluation of multiple frontier models on tasks from PARAMETR-Bench on hard difficulty using four public seeds [10, 11, 12, 13] and got following scores. Please note that while the ranking of the models is suggestive, the sample size is small. Therefore, these scores should not be taken as definitive benchmarks, but rather as a demonstration of the framework's capabilities.
 
 <p align="center">
     <br>
   <img src="https://otheiner.github.io/PARAMETR-Bench-blog/assets/images/PARAMETR-Bench/benchmark_results_public_judge_haiku-4-5.png" width="700" title="Results of the `benchmark` - for details see the [blog post](https://otheiner.github.io/PARAMETR-Bench-blog)">
     <br><br>
 </p>
+
+Beyond standard scoring, I conducted additional analyses. For instance, PARAMETR-Bench can shed light on the varying problem-solving strategies employed by different models. The following plot shows the relative fraction of tool calls across tasks for each model. Agents were given 10 agentic turns, and during each turn, they could issue multiple parallel tool calls. The white numbers inside the cells indicate the absolute number of times a given tool was called. This result is shown in the following figure.
+
+<p align="center">
+    <br>
+  <img src="https://otheiner.github.io/PARAMETR-Bench-blog/assets/images/PARAMETR-Bench/tool_usage_public.png" width="700" title="Tool calls and various working strategies of different models.` - for details see the [blog post](https://otheiner.github.io/PARAMETR-Bench-blog)">
+    <br><br>
+</p>
+
+To learn details about evaluation methodology, details of these plots, and more results, visit [blog post](https://otheiner.github.io/PARAMETR-Bench-blog).
 
 # Motivation 
 
